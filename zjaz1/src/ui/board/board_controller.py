@@ -1,5 +1,5 @@
 from ui.board.board_view import BoardView
-from state.player import Player
+from models.player import Player
 
 # TODO: Implement controller 
 class BoardController:

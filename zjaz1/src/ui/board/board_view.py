@@ -1,7 +1,7 @@
 from PyQt6.QtCore import (QPointF, Qt, pyqtSignal)
 from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import (QWidget)
-from state.player import Player
+from models.player import Player
 
 BOARD_BG = "#111827"
 LINE_COLOR = "#4b5563"
