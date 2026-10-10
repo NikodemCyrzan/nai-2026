@@ -5,13 +5,13 @@ class GameAction:
 
 class PlacePawnAction(GameAction):
     def __init__(self, at_index: int):
-        self._at_index: int = at_index
+        self.at_index: int = at_index
         super().__init__()
 
 class MovePawnAction(GameAction):
     def __init__(self,from_index: int, to_index: int ):
-        self._from_index: int = from_index
-        self._to_index: int = to_index
+        self.from_index: int = from_index
+        self.to_index: int = to_index
         super().__init__()
 
 

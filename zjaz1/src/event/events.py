@@ -12,5 +12,5 @@ class GameStopEvent(GameEvent):
 
 class BoardStateChangeEvent(GameEvent):
     def __init__(self, board: Board):
-        self._board = board # temp so that we don't have to rewrite the value each time
+        self.board = board # temp so that we don't have to rewrite the value each time
 
