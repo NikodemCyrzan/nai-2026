@@ -5,7 +5,7 @@ from event.eventbus import GameEvent, GameEventBus
 
 type GameEventCreator[T, E: GameEvent] = Callable[[T], E]
 
-type ValueUpdater[T] = Callable[[T], None]
+type ValueUpdater[T] = Callable[[T], T]
 
 class StateHolder[T, E: GameEvent]:
     def __init__(self,
@@ -18,13 +18,17 @@ class StateHolder[T, E: GameEvent]:
         self._value = value
 
 
+    @property
+    def value(self) -> T:
+        return copy.deepcopy(self._value)
+
     def update(self, updater: ValueUpdater[T]):
         clone = copy.deepcopy(self._value)
-        updater(clone)
-        self._value = clone
-        self.emit()
+        new = updater(clone)
+        self._value = new
+        self._emit()
 
-    def emit(self):
+    def _emit(self):
         clone = copy.deepcopy(self._value)
         self._bus.emit(self._creator(clone))
 

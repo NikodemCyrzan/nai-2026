@@ -29,7 +29,7 @@ class BoardView(QWidget):
         self.setMinimumSize(400, 400)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"background: {BOARD_BG};")
-        self._nodes: list[Player] = [Player.Node] * 24
+        self._nodes: list[Player] = [Player.Empty] * 24
 
     def set_nodes(self, nodes: list[Player]):
         self._nodes = list(nodes)
@@ -65,7 +65,7 @@ class BoardView(QWidget):
         radius = step * 0.32
         p.setPen(QPen(QColor(PIECE_OUTLINE), 2))
         for i, piece in enumerate(self._nodes):
-            if piece is Player.Node:
+            if piece is Player.Empty:
                 continue
             p.setBrush(QColor(WHITE_PIECE if piece == "white" else BLACK_PIECE))
             p.drawEllipse(self._point_pos(i), radius, radius)

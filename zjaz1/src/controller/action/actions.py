@@ -3,6 +3,9 @@ class GameAction:
     def __init__(self):
         pass
 
+class GameStartAction(GameAction):
+    pass
+
 class PlacePawnAction(GameAction):
     def __init__(self, at_index: int):
         self.at_index: int = at_index

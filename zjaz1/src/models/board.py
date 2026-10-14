@@ -5,7 +5,7 @@ class Board:
     def __init__(self):
         self._layer_length = 8
         self._layers_count = 3
-        self._nodes = [Player.Node] * self._layer_length * self._layers_count
+        self._nodes = [Player.Empty] * self._layer_length * self._layers_count
 
     def is_intersection(index: int) -> bool:
         return index % 2 == 0
