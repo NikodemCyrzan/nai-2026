@@ -1,7 +1,7 @@
 import copy
 from collections.abc import Callable
 
-from event.eventbus import GameEvent, GameEventBus
+from event.bus import GameEvent, GameEventBus
 
 type GameEventCreator[T, E: GameEvent] = Callable[[T], E]
 

@@ -1,5 +1,7 @@
 import math
-from player import Player
+
+from event.events import GameEvent
+from model.player import Player
 
 class Board:
     def __init__(self):
@@ -37,6 +39,8 @@ class Board:
                 case 2:
                     nodes.extend(self._get_neighbours_2(index))
 
+        return [self.get(i) for i in nodes]
+
     def _get_neighbours_0(self, index: int) -> list[Player]:
         return [
             index + self._layer_length,
@@ -55,3 +59,8 @@ class Board:
 
     def _normalize_index(self, index: int) -> int:
         return self.get_layer_number(index) * self._layer_length + (index % self._layer_length)
+
+
+class BoardStateChangeEvent(GameEvent):
+    def __init__(self, board: Board):
+        self.board = board

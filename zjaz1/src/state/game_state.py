@@ -1,20 +1,11 @@
 from enum import Enum
 
-from event.eventbus import GameEventBus
-from event.events import BoardStateChangeEvent, PlayerStateChangeEvent, GameStatusChangeEvent, PlayerTurnChangeEvent
-from holder.stateholder import StateHolder
-from models.board import Board
-from models.player import Player
+from event.bus import GameEventBus
+from model.board import Board, BoardStateChangeEvent
+from model.player import PlayerState, Player, PlayerStateChangeEvent, PlayerTurnChangeEvent
+from model.status import GameStatusChangeEvent, GameStatus
+from state.holder import StateHolder
 
-class GameStatus(Enum):
-    WAITING = 1
-    STARTED = 2
-    IN_PROGRESS = 3
-    FINISHED = 4
-
-class PlayerState:
-    def __init__(self, initial_pawns: int = 0):
-        self._pawns_left_to_place: int
 
 class GameStateInitializer:
     def __init__(self,

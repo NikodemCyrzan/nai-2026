@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QApplication,
 )
 
-from controller.controller import GameController
+from controller.game_controller import GameController
 from game import Game
 from ui.main_window import MainWindow
 

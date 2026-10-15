@@ -1,9 +1,9 @@
-from controller.controller import GameController
-from event.eventbus import GameEventBus
-from logic.logic import GameLogic
-from models.board import Board
-from models.player import Player
-from state.state import GameState, GameStateInitializer
+from controller.game_controller import GameController
+from event.bus import GameEventBus
+from logic.game_logic import GameLogic
+from model.board import Board
+from model.player import Player
+from state.game_state import GameState, GameStateInitializer
 
 
 class Game:

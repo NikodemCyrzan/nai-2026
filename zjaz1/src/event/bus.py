@@ -1,6 +1,6 @@
 import copy
-from collections.abc import Callable
 from collections import defaultdict
+from collections.abc import Callable
 
 from event.events import GameEvent
 

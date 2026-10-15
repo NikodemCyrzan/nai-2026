@@ -1,13 +1,11 @@
-from enum import Enum
-
-from controller.action.actions import GameAction, GameStartAction
-from models.player import Player
-from state.state import GameState, GameStatus
+from controller.actions import GameAction, GameStartAction
+from event.events import GameEvent
+from model.player import Player
+from state.game_state import GameState, GameStatus
 
 class NoGameActionHandlerFound(Exception):
     def __init__(self, action: GameAction) -> None:
         self.action = action
-
 
 class GameLogic:
     def __init__(self, state: GameState):
@@ -46,6 +44,18 @@ class GameLogic:
             return Player.White
         else:
             return Player.Black
+
+
+
+class GameStartEvent(GameEvent):
+    pass
+
+class GameStopEvent(GameEvent):
+    pass
+
+class GameExceptionEvent(GameEvent):
+    def __init__(self, message: str):
+        self.message = message
 
 
 

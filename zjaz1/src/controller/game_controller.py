@@ -1,6 +1,7 @@
-from controller.action.actions import GameAction
-from logic.logic import GameLogic
-from models.player import Player
+from controller.actions import GameAction
+from logic.game_logic import GameLogic
+from model.player import Player
+
 
 class GameController:
     def __init__(self,
