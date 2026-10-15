@@ -16,7 +16,7 @@ class Game:
         self._board = Board()
         self._bus = GameEventBus()
         self._state = GameState(bus=self._bus, board=self._board, initializer=initializer)
-        self._logic = GameLogic(self._state)
+        self._logic = GameLogic(self._state, self._bus)
         self._white_controller = GameController(self._logic, Player.White)
         self._black_controller = GameController(self._logic, Player.Black)
 
@@ -27,5 +27,9 @@ class Game:
     @property
     def black_controller(self) -> GameController:
         return self._black_controller
+
+    @property
+    def bus(self) -> GameEventBus:
+        return self._bus
 
 

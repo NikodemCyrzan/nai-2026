@@ -1,11 +1,12 @@
 import copy
 from collections.abc import Callable
+from typing import Any
 
 from event.bus import GameEvent, GameEventBus
 
 type GameEventCreator[T, E: GameEvent] = Callable[[T], E]
 
-type ValueUpdater[T] = Callable[[T], T]
+type ValueUpdater[T] = Callable[[T], Any]
 
 class StateHolder[T, E: GameEvent]:
     def __init__(self,
@@ -23,9 +24,9 @@ class StateHolder[T, E: GameEvent]:
         return copy.deepcopy(self._value)
 
     def update(self, updater: ValueUpdater[T]):
-        clone = copy.deepcopy(self._value)
-        new = updater(clone)
-        self._value = new
+        passed = copy.deepcopy(self._value)
+        returned = updater(passed)
+        self._value = returned if returned is not None else passed
         self._emit()
 
     def _emit(self):

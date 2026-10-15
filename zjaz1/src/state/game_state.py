@@ -18,7 +18,7 @@ class GameStateInitializer:
 class GameState:
     def __init__(self, bus: GameEventBus, board: Board, initializer: GameStateInitializer):
         self._status = StateHolder(
-            GameStatus.WAITING, bus, lambda s: GameStatusChangeEvent(s)
+            GameStatus.Waiting, bus, lambda s: GameStatusChangeEvent(s)
         )
 
         self._board_state = StateHolder(

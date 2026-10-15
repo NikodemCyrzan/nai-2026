@@ -1,13 +1,13 @@
 from enum import Enum
 
-from event.events import GameEvent
+from event.bus import GameEvent
 
 
 class GameStatus(Enum):
-    WAITING = 1
-    STARTED = 2
-    IN_PROGRESS = 3
-    FINISHED = 4
+    Waiting = 1
+    Starting = 2
+    In_Progress = 3
+    Finished = 4
 
 class GameStatusChangeEvent(GameEvent):
     def __init__(self, status: GameStatus):

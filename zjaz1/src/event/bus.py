@@ -2,7 +2,8 @@ import copy
 from collections import defaultdict
 from collections.abc import Callable
 
-from event.events import GameEvent
+class GameEvent:
+    pass
 
 type GameEventListener[E: GameEvent] = Callable[[E], None]
 
@@ -26,6 +27,9 @@ class GameEventBus:
         self._listeners[event_type].discard(listener)
 
     def emit[E: GameEvent](self, event: E) -> None:
+        for listener in self._listeners[GameEvent]:
+            listener(copy.deepcopy(event))
+
         for listener in self._listeners[type(event)]:
             listener(copy.deepcopy(event))
 

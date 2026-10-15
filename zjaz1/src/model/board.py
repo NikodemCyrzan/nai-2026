@@ -1,6 +1,7 @@
+import copy
 import math
 
-from event.events import GameEvent
+from event.bus import GameEvent
 from model.player import Player
 
 class Board:
@@ -8,6 +9,9 @@ class Board:
         self._layer_length = 8
         self._layers_count = 3
         self._nodes = [Player.Empty] * self._layer_length * self._layers_count
+
+    def get_all_nodes(self) -> list[Player]:
+        return copy.deepcopy(self._nodes)
 
     def is_intersection(index: int) -> bool:
         return index % 2 == 0
@@ -59,6 +63,7 @@ class Board:
 
     def _normalize_index(self, index: int) -> int:
         return self.get_layer_number(index) * self._layer_length + (index % self._layer_length)
+
 
 
 class BoardStateChangeEvent(GameEvent):
