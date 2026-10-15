@@ -1,4 +1,4 @@
-from action.actions import GameAction
+from controller.action.actions import GameAction
 from logic.logic import GameLogic
 from models.player import Player
 

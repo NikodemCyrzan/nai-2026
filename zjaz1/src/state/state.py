@@ -18,22 +18,20 @@ class PlayerState:
 
 class GameStateInitializer:
     def __init__(self,
-        board: Board,
         player_white_initial_pawns: int = 0,
         player_black_initial_pawns: int = 0
     ):
-        self.board: Board = board
         self.player_white_initial_pawns: int = player_white_initial_pawns
         self.player_black_initial_pawns: int = player_black_initial_pawns
 
 class GameState:
-    def __init__(self, bus: GameEventBus, initializer: GameStateInitializer):
+    def __init__(self, bus: GameEventBus, board: Board, initializer: GameStateInitializer):
         self._status = StateHolder(
             GameStatus.WAITING, bus, lambda s: GameStatusChangeEvent(s)
         )
 
         self._board_state = StateHolder(
-            initializer.board, bus, lambda b: BoardStateChangeEvent(b)
+            board, bus, lambda b: BoardStateChangeEvent(b)
         )
 
         ws = PlayerState(initializer.player_white_initial_pawns)

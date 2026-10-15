@@ -4,6 +4,10 @@ from controller.action.actions import GameAction, GameStartAction
 from models.player import Player
 from state.state import GameState, GameStatus
 
+class NoGameActionHandlerFound(Exception):
+    def __init__(self, action: GameAction) -> None:
+        self.action = action
+
 
 class GameLogic:
     def __init__(self, state: GameState):
@@ -13,6 +17,9 @@ class GameLogic:
     def handle[A: GameAction](self, action: A, player: Player) -> None:
         if type(action) == GameStartAction:
             self._start()
+
+        elif type(action) == GameAction:
+            raise NoGameActionHandlerFound(action)
 
 
     def _start(self) -> None:

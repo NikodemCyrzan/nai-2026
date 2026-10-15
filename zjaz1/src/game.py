@@ -1,0 +1,31 @@
+from controller.controller import GameController
+from event.eventbus import GameEventBus
+from logic.logic import GameLogic
+from models.board import Board
+from models.player import Player
+from state.state import GameState, GameStateInitializer
+
+
+class Game:
+    def __init__(self):
+        initializer = GameStateInitializer(
+            player_white_initial_pawns=9,
+            player_black_initial_pawns=9,
+        )
+
+        self._board = Board()
+        self._bus = GameEventBus()
+        self._state = GameState(bus=self._bus, board=self._board, initializer=initializer)
+        self._logic = GameLogic(self._state)
+        self._white_controller = GameController(self._logic, Player.White)
+        self._black_controller = GameController(self._logic, Player.Black)
+
+    @property
+    def white_controller(self) -> GameController:
+        return self._white_controller
+
+    @property
+    def black_controller(self) -> GameController:
+        return self._black_controller
+
+
