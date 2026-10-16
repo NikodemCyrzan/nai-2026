@@ -3,13 +3,9 @@ from PyQt6.QtWidgets import (
     QApplication,
 )
 
-from controller.actions import GameStartAction, PlayerPlacePawnAction, PlayerMovePawnAction, PlayerRemovePawnAction
-from controller.game_controller import GameController
+from controller.actions import GameStartAction
 from event.bus import GameEvent
 from game import Game
-from logic.game_logic import GameStartedEvent, GameExceptionEvent
-from model.board import BoardStateChangeEvent, Board
-from model.player import PlayerTurnChangeEvent
 from rounds.game_round_test import game_scenario_1, verify_scenario, game_scenario_2_blocking
 from ui.main_window import MainWindow
 
@@ -27,6 +23,7 @@ if __name__ == "__main__":
     bus.subscribe(GameEvent, lambda event: print(f"Event occurred: {type(event)}: {event.__dict__}"))
 
     app = QApplication(sys.argv)
-    main = MainWindow()
+    main = MainWindow(game)
     main.show()
+    white_controller.perform(GameStartAction())
     sys.exit(app.exec())

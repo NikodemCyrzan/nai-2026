@@ -1,7 +1,3 @@
-from collections.abc import Callable
-
-from typing import Final
-
 from constants import PLAYER_MINIMUM_PAWNS_COUNT, PLAYER_FLYING_PAWNS_COUNT
 from controller.actions import GameAction, GameStartAction, PlayerPlacePawnAction, PlayerMovePawnAction, \
     PlayerRemovePawnAction

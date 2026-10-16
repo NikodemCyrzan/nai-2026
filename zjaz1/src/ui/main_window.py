@@ -3,12 +3,13 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget
 )
+from game import Game
 from ui.top_bar.top_bar_view import TopBarView
 from ui.board.board_view import BoardView
 from ui.window_controller import WindowController
 
 class MainWindow(QMainWindow):
-    def __init__(self): 
+    def __init__(self, game: Game):
         super().__init__()
         self.setWindowTitle("Nine Men's Morris")
 
@@ -24,4 +25,4 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         self.resize(700, 500)
 
-        WindowController(self)
+        self._window_controller = WindowController(self, game)

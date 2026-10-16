@@ -20,7 +20,7 @@ class TopBarView(QWidget):
         self.setStyleSheet(f"#topBar {{ background: {BAR_BG}; }}")
  
         self._white = PlayerPanel("Gracz")
-        self._black = PlayerPanel("AI", mirrored=True)
+        self._black = PlayerPanel("AI", mirrored = True)
  
         self._message = QLabel("")
         self._message.setAlignment(Qt.AlignmentFlag.AlignCenter)

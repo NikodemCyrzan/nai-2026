@@ -9,6 +9,7 @@ POINT_COLOR = "#6b7280"
 WHITE_PIECE = "#f9fafb"
 BLACK_PIECE = "#1f2937"
 PIECE_OUTLINE = "#9ca3af"
+SELECTED_OUTLINE = "#fbbf24"
 
 POINTS: list[tuple[int, int]] = [
     (0, 0), (3, 0), (6, 0), (6, 3), (6, 6), (3, 6), (0, 6), (0, 3),
@@ -30,9 +31,14 @@ class BoardView(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"background: {BOARD_BG};")
         self._nodes: list[Player] = [Player.Empty] * 24
+        self._selected: int | None = None
 
     def set_nodes(self, nodes: list[Player]):
         self._nodes = list(nodes)
+        self.update()
+
+    def set_selected(self, index: int | None):
+        self._selected = index
         self.update()
 
     def _geometry(self) -> tuple[float, float, float]:
@@ -48,7 +54,7 @@ class BoardView(QWidget):
         col, row = POINTS[index]
         return QPointF(x0 + col * step, y0 + row * step)
 
-    def paintEvent(self, event):
+    def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         _, _, step = self._geometry()
@@ -67,8 +73,13 @@ class BoardView(QWidget):
         for i, piece in enumerate(self._nodes):
             if piece is Player.Empty:
                 continue
-            p.setBrush(QColor(WHITE_PIECE if piece == "white" else BLACK_PIECE))
+            p.setBrush(QColor(WHITE_PIECE if piece == Player.White else BLACK_PIECE))
             p.drawEllipse(self._point_pos(i), radius, radius)
+
+        if self._selected is not None:
+            p.setPen(QPen(QColor(SELECTED_OUTLINE), 3))
+            p.setBrush(Qt.BrushStyle.NoBrush)
+            p.drawEllipse(self._point_pos(self._selected), radius + 4, radius + 4)
 
     def mousePressEvent(self, event):
         click = event.position()

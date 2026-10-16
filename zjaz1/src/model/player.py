@@ -13,7 +13,6 @@ class Player(Enum):
     White = 1,
     Black = 2
 
-
 class PlayerState:
     def __init__(self, initial_pawns: int = 0):
         self._pawns_left_to_place: int = initial_pawns
@@ -58,12 +57,14 @@ class PlayerState:
     def set_placing_phase(self):
         self._phase = PlayerPhase.Placing
 
-
-
 class PlayerStateChangeEvent(GameEvent):
     def __init__(self, player: Player, state: PlayerState):
         self.player = player
         self._state = state
+
+    @property
+    def state(self) -> PlayerState:
+        return self._state
 
 class PlayerTurnChangeEvent(GameEvent):
     def __init__(self, player: Player):
@@ -89,4 +90,3 @@ class PlayerRemovedPawnEvent(GameEvent):
     def __init__(self, player: Player, index: int):
         self.player = player
         self.index = index
-

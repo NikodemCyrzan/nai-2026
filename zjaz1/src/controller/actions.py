@@ -17,8 +17,3 @@ class PlayerMovePawnAction(GameAction):
 class PlayerRemovePawnAction(GameAction):
     def __init__(self, at_index: int):
         self.at_index: int = at_index
-
-
-
-
-
