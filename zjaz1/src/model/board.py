@@ -54,6 +54,25 @@ class Board:
 
         return nodes
 
+    def get_mill_rows(self, index: int) -> list[list[int]]:
+        length = self._layer_length
+        layer_start = self.get_layer_number(index) * length
+        local_index = index % length
+
+        def at(offset: int) -> int:
+            return layer_start + ((local_index + offset) % length)
+
+        if is_intersection(index):
+            return [
+                [at(-1), index, at(1)],
+                [local_index + layer * length for layer in range(self._layers_count)],
+            ]
+
+        return [
+            [at(-2), at(-1), index],
+            [index, at(1), at(2)],
+        ]
+
     def _get_neighbours_0(self, index: int) -> list[int]:
         return [
             index + self._layer_length,

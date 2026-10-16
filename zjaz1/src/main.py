@@ -15,8 +15,6 @@ from ui.main_window import MainWindow
 
 
 if __name__ == "__main__":
-    print("start")
-
     verify_scenario(game_scenario_1, expect_mills=True)
     verify_scenario(game_scenario_2_blocking, expect_mills=False)
 

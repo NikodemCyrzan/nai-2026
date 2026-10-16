@@ -13,32 +13,6 @@ from model.player import Player, PlayerPlacedPawnEvent, PlayerState, PlayerState
 from state.game_state import GameState, GameStatus
 from state.holder import ValueUpdater, StateHolder
 
-MILLS: Final[tuple[tuple[int, int, int], ...]] = (
-    # Outer
-    (0, 1, 2),
-    (2, 3, 4),
-    (4, 5, 6),
-    (6, 7, 0),
-
-    # Middle
-    (8, 9, 10),
-    (10, 11, 12),
-    (12, 13, 14),
-    (14, 15, 8),
-
-    # Inner
-    (16, 17, 18),
-    (18, 19, 20),
-    (20, 21, 22),
-    (22, 23, 16),
-
-    # Connections between layers
-    (1, 9, 17),
-    (3, 11, 19),
-    (5, 13, 21),
-    (7, 15, 23),
-)
-
 class GameLogic:
     def __init__(self, state: GameState, bus: GameEventBus):
         self._state = state
@@ -127,9 +101,9 @@ class GameLogic:
 
         self._emit_event(PlayerPlacedPawnEvent(player, index))
 
-        has_mill, mill = self._is_3_in_a_row(index, player)
+        mill = self._is_3_in_a_row(index, player)
 
-        if has_mill:
+        if mill is not None:
             state.update(lambda ps: ps.set_removing_phase())
             self._emit_event(PlayerHasMillEvent(player, mill))
             return
@@ -174,9 +148,9 @@ class GameLogic:
 
         self._emit_event(PlayerMovedPawnEvent(player, from_index, to_index))
 
-        has_mill, mill = self._is_3_in_a_row(to_index, player)
+        mill = self._is_3_in_a_row(to_index, player)
 
-        if has_mill:
+        if mill is not None:
             state.update(lambda ps: ps.set_removing_phase())
             self._emit_event(PlayerHasMillEvent(player, mill))
             return
@@ -238,23 +212,21 @@ class GameLogic:
         self._next_turn()
 
     def _can_remove_pawn(self, index: int, opponent: Player) -> bool:
-        if not self._is_3_in_a_row(index, opponent)[0]:
+        if self._is_3_in_a_row(index, opponent) is None:
             return True
 
-        return all(self._is_3_in_a_row(i, opponent)[0]
+        return all(
+            self._is_3_in_a_row(i, opponent) is not None
             for i, pawn in enumerate(self._board.get_all_nodes())
             if pawn == opponent
         )
 
-    def _is_3_in_a_row(self, index: int, player: Player) -> tuple[bool, tuple[int, int, int]]:
-        for mill in MILLS:
-            if index not in mill:
-                continue
+    def _is_3_in_a_row(self, index: int, player: Player) -> tuple[int, int, int] | None:
+        for row in self._board.get_mill_rows(index):
+            if all(self._board.get(i) == player for i in row):
+                return tuple(row)
 
-            if all(self._board.get(i) == player for i in mill):
-                return True, mill
-
-        return False, (0, 0, 0)
+        return None
 
     def _has_available_moves(self, player: Player) -> bool:
         for index, node in enumerate(self._board.get_all_nodes()):
@@ -333,10 +305,3 @@ class GameExceptionEvent(GameEvent):
 class NoGameActionHandlerFound(Exception):
     def __init__(self, action: GameAction) -> None:
         self.action = action
-
-
-
-
-
-
-
