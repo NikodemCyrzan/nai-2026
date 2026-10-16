@@ -11,7 +11,7 @@ from ui.window_controller import WindowController
 class MainWindow(QMainWindow):
     def __init__(self, game: Game):
         super().__init__()
-        self.setWindowTitle("Nine Men's Morris")
+        self.setWindowTitle("NAI - Nine Men's Morris - s30161, s30291")
 
         self.topBar = TopBarView()
         self.board = BoardView()

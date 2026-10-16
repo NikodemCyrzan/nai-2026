@@ -261,7 +261,7 @@ def verify_scenario(scenario, expect_mills: bool) -> None:
     if expect_mills:
         assert mills.count((Player.White, (0, 1, 2))) == 7
         assert (Player.Black, (7, 15, 23)) in mills
-        assert "Cannot remove a protected pawn!" in errors
+        assert "Nie można usunąć chronionego pionka!" in errors
     else:
         assert not mills, mills
 

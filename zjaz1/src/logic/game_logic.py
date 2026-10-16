@@ -17,14 +17,14 @@ class GameLogic:
     def handle[A: GameAction](self, action: A, player: Player) -> None:
         if isinstance(action, GameStartAction):
             if self._status != GameStatus.Waiting:
-                self._emit_exception_event("Game has already started!", player)
+                self._emit_exception_event("Gra już wystartowała!", player)
                 return
 
             self._start()
             return
 
         if self._status != GameStatus.In_Progress:
-            self._emit_exception_event("Game is not in progress!", player)
+            self._emit_exception_event("Gra nie jest w toku!", player)
             return
 
         if isinstance(action, PlayerPlacePawnAction):
@@ -68,23 +68,27 @@ class GameLogic:
 
     def _place_pawn(self, index: int, player: Player) -> None:
         if self._current_turn() != player:
-            self._emit_exception_event(f"It's not {player}'s turn!", player)
+            self._emit_exception_event(f"To nie jest tura gracza {player}!", player)
             return
 
         node: Player = self._board.get(index)
 
         if node != Player.Empty:
-            self._emit_exception_event(f"Position {index} is already occupied!", player)
+            self._emit_exception_event(f"Pozycja {index} jest już zajęta!", player)
             return
 
         state: StateHolder[PlayerState, PlayerStateChangeEvent] = self._identify_player_state_holder(player)
 
         if state.value.phase != PlayerPhase.Placing:
-            self._emit_exception_event(f"{player} is not in the placing phase!", player)
+            self._emit_exception_event(
+                f"Gracz {player} nie jest w fazie ustawiania pionków!", player
+            )
             return
 
         if state.value.pawns_left_to_place <= 0:
-            self._emit_exception_event(f"{player} has no pawns left to place!", player)
+            self._emit_exception_event(
+                f"Gracz {player} nie ma już pionków do ustawienia!", player
+            )
             return
 
         self._update_board(lambda b: b.set(index, player))
@@ -108,7 +112,7 @@ class GameLogic:
 
     def _move_pawn(self, from_index: int, to_index: int, player: Player) -> None:
         if self._current_turn() != player:
-            self._emit_exception_event(f"It's not {player}'s turn!", player)
+            self._emit_exception_event(f"To nie jest tura gracza {player}!", player)
             return
 
         from_node: Player = self._board.get(from_index)
@@ -117,26 +121,34 @@ class GameLogic:
         state: StateHolder[PlayerState, PlayerStateChangeEvent] = self._identify_player_state_holder(player)
 
         if state.value.phase not in [PlayerPhase.Moving, PlayerPhase.Flying]:
-            self._emit_exception_event(f"{player} is not in the moving or flying phase!", player)
+            self._emit_exception_event(
+                f"Gracz {player} nie jest w fazie ruchu ani latania!", player
+            )
             return
 
         if from_index == to_index:
-            self._emit_exception_event(f"Cannot move to the same position {to_index}!", player)
+            self._emit_exception_event(
+                f"Nie można przenieść pionka na tę samą pozycję {to_index}!", player
+            )
             return
 
         if from_node != player:
-            self._emit_exception_event(f"Position {from_index} does not contain {player}'s pawn!", player)
+            self._emit_exception_event(
+                f"Pozycja {from_index} nie zawiera pionka gracza {player}!", player
+            )
             return
 
         if to_node != Player.Empty:
-            self._emit_exception_event(f"Position {to_index} is already occupied!", player)
+            self._emit_exception_event(f"Pozycja {to_index} jest już zajęta!", player)
             return
 
 
         if state.value.phase == PlayerPhase.Moving:
             neighbours = self._board.get_neighbours(from_index)
             if to_index not in neighbours:
-                self._emit_exception_event(f"Position {to_index} is not a valid move for {player}!", player)
+                self._emit_exception_event(
+                    f"Pozycja {to_index} nie jest prawidłowym ruchem gracza {player}!", player
+                )
                 return
 
         self._update_board(lambda b: b.set(from_index, Player.Empty))
@@ -156,7 +168,7 @@ class GameLogic:
     def _remove_pawn(self, index: int, player: Player) -> None:
         if self._current_turn() != player:
             self._emit_exception_event(
-                f"It's not {player}'s turn!", player
+                f"To nie jest tura gracza {player}!", player
             )
             return
 
@@ -165,22 +177,25 @@ class GameLogic:
         state = self._identify_player_state_holder(player)
 
         if not state.value.is_removing():
-            self._emit_exception_event(f"{player} is not in the removing phase!", player)
+            self._emit_exception_event(
+                f"Gracz {player} nie jest w fazie usuwania pionka!", player
+            )
             return
 
         if node == Player.Empty:
-            self._emit_exception_event(f"Position {index} is already empty!", player)
+            self._emit_exception_event(f"Pozycja {index} jest już pusta!", player)
             return
 
         if node == player:
-            self._emit_exception_event(f"{player} cannot remove their own pawn!", player)
+            self._emit_exception_event(
+                f"Gracz {player} nie może usunąć własnego pionka!", player
+            )
             return
 
         if not self._can_remove_pawn(index, node):
-            self._emit_exception_event("Cannot remove a protected pawn!", player)
+            self._emit_exception_event("Nie można usunąć chronionego pionka!", player)
             return
 
-        # Remove the opponent's pawn exactly once.
         self._update_board(lambda b: b.set(index, Player.Empty))
 
         self._emit_event(PlayerRemovedPawnEvent(player, index))
@@ -211,10 +226,13 @@ class GameLogic:
         if self._is_3_in_a_row(index, opponent) is None:
             return True
 
+        return self._all_pawns_in_mills(opponent)
+
+    def _all_pawns_in_mills(self, player: Player) -> bool:
         return all(
-            self._is_3_in_a_row(i, opponent) is not None
-            for i, pawn in enumerate(self._board.get_all_nodes())
-            if pawn == opponent
+            self._is_3_in_a_row(index, player) is not None
+            for index, pawn in enumerate(self._board.get_all_nodes())
+            if pawn == player
         )
 
     def _is_3_in_a_row(self, index: int, player: Player) -> tuple[int, int, int] | None:

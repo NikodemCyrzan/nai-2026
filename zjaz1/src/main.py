@@ -12,6 +12,7 @@ from ai.ai_controller import AiController
 
 
 if __name__ == "__main__":
+    print("Uruchamianie gry Nine Men's Morris autorstwa (s30161, s30291) - wersja 1.0 - PROJEKT 1 NAI")
     verify_scenario(game_scenario_1, expect_mills=True)
     verify_scenario(game_scenario_2_blocking, expect_mills=False)
 
