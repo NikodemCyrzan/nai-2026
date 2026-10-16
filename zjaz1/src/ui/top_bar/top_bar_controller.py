@@ -47,11 +47,11 @@ class TopBarController:
         self._render()
 
     def _on_player_state_change(self, event: PlayerStateChangeEvent) -> None:
-        self._to_place[event.player] = event.state.pawns_left_to_place
-        if event.player == Player.White:
-            self._phase = event.state.phase
-        self._error = None
-        self._render()
+            self._to_place[event.player] = event.state.pawns_left_to_place
+            if event.player == Player.White:
+                self._phase = event.state.phase
+            self._error = None
+            self._render()
 
     def _on_exception(self, event: GameExceptionEvent) -> None:
         if event.player != Player.White:

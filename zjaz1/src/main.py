@@ -8,6 +8,7 @@ from event.bus import GameEvent
 from game import Game
 from rounds.game_round_test import game_scenario_1, verify_scenario, game_scenario_2_blocking
 from ui.main_window import MainWindow
+from ai.ai_controller import AiController
 
 
 if __name__ == "__main__":
@@ -25,5 +26,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     main = MainWindow(game)
     main.show()
+    ai = AiController(game)
     white_controller.perform(GameStartAction())
     sys.exit(app.exec())

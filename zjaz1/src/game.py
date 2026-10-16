@@ -32,5 +32,3 @@ class Game:
     @property
     def bus(self) -> GameEventBus:
         return self._bus
-
-

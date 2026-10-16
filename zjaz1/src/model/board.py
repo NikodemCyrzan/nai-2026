@@ -15,6 +15,10 @@ class Board:
         self._layers_count = 3
         self._nodes = [Player.Empty] * self._layer_length * self._layers_count
 
+    @property
+    def length(self) -> int:
+        return self._layer_length * self._layers_count
+
     def get_all_nodes(self) -> list[Player]:
         return copy.deepcopy(self._nodes)
 
