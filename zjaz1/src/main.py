@@ -10,11 +10,15 @@ from game import Game
 from logic.game_logic import GameStartedEvent, GameExceptionEvent
 from model.board import BoardStateChangeEvent, Board
 from model.player import PlayerTurnChangeEvent
-from rounds.game_round_test import game_scenario_1
+from rounds.game_round_test import game_scenario_1, verify_scenario, game_scenario_2_blocking
 from ui.main_window import MainWindow
+
 
 if __name__ == "__main__":
     print("start")
+
+    verify_scenario(game_scenario_1, expect_mills=True)
+    verify_scenario(game_scenario_2_blocking, expect_mills=False)
 
     game = Game()
     bus = game.bus
@@ -23,8 +27,6 @@ if __name__ == "__main__":
     black_controller = game.black_controller
 
     bus.subscribe(GameEvent, lambda event: print(f"Event occurred: {type(event)}: {event.__dict__}"))
-
-    game_scenario_1(white_controller, black_controller)
 
     app = QApplication(sys.argv)
     main = MainWindow()

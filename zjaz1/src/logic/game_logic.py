@@ -79,7 +79,6 @@ class GameLogic:
             self._update_status(GameStatus.In_Progress)
             self._next_turn()
 
-        pass
 
     def _end(self, winner: Player) -> None:
         self._update_status(GameStatus.Ended)
@@ -196,27 +195,19 @@ class GameLogic:
         state = self._identify_player_state_holder(player)
 
         if not state.value.is_removing():
-            self._emit_exception_event(
-                f"{player} is not in the removing phase!", player
-            )
+            self._emit_exception_event(f"{player} is not in the removing phase!", player)
             return
 
         if node == Player.Empty:
-            self._emit_exception_event(
-                f"Position {index} is already empty!", player
-            )
+            self._emit_exception_event(f"Position {index} is already empty!", player)
             return
 
         if node == player:
-            self._emit_exception_event(
-                f"{player} cannot remove their own pawn!", player
-            )
+            self._emit_exception_event(f"{player} cannot remove their own pawn!", player)
             return
 
         if not self._can_remove_pawn(index, node):
-            self._emit_exception_event(
-                "Cannot remove a protected pawn!", player
-            )
+            self._emit_exception_event("Cannot remove a protected pawn!", player)
             return
 
         # Remove the opponent's pawn exactly once.
@@ -304,11 +295,7 @@ class GameLogic:
 
         if state.phase == PlayerPhase.Moving:
             if not self._has_available_moves(next_player):
-                winner = (
-                    Player.Black
-                    if next_player == Player.White
-                    else Player.White
-                )
+                winner = (Player.Black if next_player == Player.White else Player.White)
 
                 self._end(winner)
                 return
