@@ -6,7 +6,7 @@ from event.bus import GameEvent, GameEventBus
 
 type GameEventCreator[T, E: GameEvent] = Callable[[T], E]
 
-type ValueUpdater[T] = Callable[[T], Any]
+type ValueUpdater[T] = Callable[[T], T | None]
 
 class StateHolder[T, E: GameEvent]:
     def __init__(self,

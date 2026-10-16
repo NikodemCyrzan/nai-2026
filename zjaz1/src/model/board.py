@@ -4,6 +4,11 @@ import math
 from event.bus import GameEvent
 from model.player import Player
 
+
+def is_intersection(index: int) -> bool:
+    return index % 2 == 1
+
+
 class Board:
     def __init__(self):
         self._layer_length = 8
@@ -12,9 +17,6 @@ class Board:
 
     def get_all_nodes(self) -> list[Player]:
         return copy.deepcopy(self._nodes)
-
-    def is_intersection(index: int) -> bool:
-        return index % 2 == 0
 
     def get_layer_number(self, index: int) -> int:
         return math.floor(index / self._layer_length)
@@ -28,35 +30,42 @@ class Board:
     def get_slice(self, start, end) -> list[Player]:
         return self._nodes[start: end]
 
-    def get_neighbours(self, index: int) -> list[Player]:
+    def get_neighbours(self, index: int) -> list[int]:
+        layer = self.get_layer_number(index)
+        local_index = index % self._layer_length
+        layer_start = layer * self._layer_length
+
         nodes = [
-            self._normalize_index(index - 1),
-            self._normalize_index(index + 1)
+            layer_start + ((local_index - 1) % self._layer_length),
+            layer_start + ((local_index + 1) % self._layer_length),
         ]
 
-        if self.is_intersection(index):
-            match self.get_layer_number(index):
+        if is_intersection(index):
+            match layer:
                 case 0:
-                    nodes.extend(self._get_neighbours_0(index))
+                    nodes.append(index + self._layer_length)
                 case 1:
-                    nodes.extend(self._get_neighbours_1(index))
+                    nodes.extend([
+                        index - self._layer_length,
+                        index + self._layer_length,
+                    ])
                 case 2:
-                    nodes.extend(self._get_neighbours_2(index))
+                    nodes.append(index - self._layer_length)
 
-        return [self.get(i) for i in nodes]
+        return nodes
 
-    def _get_neighbours_0(self, index: int) -> list[Player]:
+    def _get_neighbours_0(self, index: int) -> list[int]:
         return [
             index + self._layer_length,
         ]
 
-    def _get_neighbours_1(self, index: int) -> list[Player]:
+    def _get_neighbours_1(self, index: int) -> list[int]:
         return [
             index - self._layer_length,
             index + self._layer_length,
         ]
 
-    def _get_neighbours_2(self, index: int) -> list[Player]:
+    def _get_neighbours_2(self, index: int) -> list[int]:
         return [
             index - self._layer_length,
         ]

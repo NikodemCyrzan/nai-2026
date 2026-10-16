@@ -1,3 +1,4 @@
+from constants import PLAYER_INITIAL_PAWNS_COUNT
 from controller.game_controller import GameController
 from event.bus import GameEventBus
 from logic.game_logic import GameLogic
@@ -9,8 +10,8 @@ from state.game_state import GameState, GameStateInitializer
 class Game:
     def __init__(self):
         initializer = GameStateInitializer(
-            player_white_initial_pawns=9,
-            player_black_initial_pawns=9,
+            player_white_initial_pawns=PLAYER_INITIAL_PAWNS_COUNT,
+            player_black_initial_pawns=PLAYER_INITIAL_PAWNS_COUNT,
         )
 
         self._board = Board()

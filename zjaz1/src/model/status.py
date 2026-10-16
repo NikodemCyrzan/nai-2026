@@ -7,7 +7,7 @@ class GameStatus(Enum):
     Waiting = 1
     Starting = 2
     In_Progress = 3
-    Finished = 4
+    Ended = 4
 
 class GameStatusChangeEvent(GameEvent):
     def __init__(self, status: GameStatus):
