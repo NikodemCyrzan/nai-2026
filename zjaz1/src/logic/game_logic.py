@@ -44,12 +44,20 @@ class GameLogic:
         self._state = state
         self._bus = bus
 
-
     def handle[A: GameAction](self, action: A, player: Player) -> None:
         if isinstance(action, GameStartAction):
-            self._start()
+            if self._status != GameStatus.Waiting:
+                self._emit_exception_event("Game has already started!", player)
+                return
 
-        elif isinstance(action, PlayerPlacePawnAction):
+            self._start()
+            return
+
+        if self._status != GameStatus.In_Progress:
+            self._emit_exception_event("Game is not in progress!", player)
+            return
+
+        if isinstance(action, PlayerPlacePawnAction):
             self._place_pawn(action.at_index, player)
 
         elif isinstance(action, PlayerMovePawnAction):
@@ -58,8 +66,7 @@ class GameLogic:
         elif isinstance(action, PlayerRemovePawnAction):
             self._remove_pawn(action.at_index, player)
 
-
-        elif isinstance(action, GameAction):
+        else:
             raise NoGameActionHandlerFound(action)
 
 
@@ -114,7 +121,12 @@ class GameLogic:
         self._update_board(lambda b: b.set(index, player))
 
         state.update(lambda ps: ps.decrease_pawns_left_to_place())
-        state.update(lambda ps: ps.set_moving_phase() if ps.pawns_left_to_place == 0 else ps)
+        state.update(
+            lambda ps: ps.set_moving_phase()
+            if ps.pawns_left_to_place == 0 else ps
+        )
+
+        self._emit_event(PlayerPlacedPawnEvent(player, index))
 
         has_mill, mill = self._is_3_in_a_row(index, player)
 
@@ -122,8 +134,6 @@ class GameLogic:
             state.update(lambda ps: ps.set_removing_phase())
             self._emit_event(PlayerHasMillEvent(player, mill))
             return
-
-        self._emit_event(PlayerPlacedPawnEvent(player, index))
 
         self._next_turn()
 
@@ -163,6 +173,8 @@ class GameLogic:
         self._update_board(lambda b: b.set(from_index, Player.Empty))
         self._update_board(lambda b: b.set(to_index, player))
 
+        self._emit_event(PlayerMovedPawnEvent(player, from_index, to_index))
+
         has_mill, mill = self._is_3_in_a_row(to_index, player)
 
         if has_mill:
@@ -170,60 +182,65 @@ class GameLogic:
             self._emit_event(PlayerHasMillEvent(player, mill))
             return
 
-        self._emit_event(PlayerMovedPawnEvent(player, from_index, to_index))
-
         self._next_turn()
-
 
     def _remove_pawn(self, index: int, player: Player) -> None:
         if self._current_turn() != player:
-            self._emit_exception_event(f"It's not {player}'s turn!", player)
+            self._emit_exception_event(
+                f"It's not {player}'s turn!", player
+            )
             return
 
         node: Player = self._board.get(index)
 
-        state: StateHolder[PlayerState, PlayerStateChangeEvent] = self._identify_player_state_holder(player)
+        state = self._identify_player_state_holder(player)
 
         if not state.value.is_removing():
-            self._emit_exception_event(f"{player} is not in the removing phase!", player)
+            self._emit_exception_event(
+                f"{player} is not in the removing phase!", player
+            )
             return
 
         if node == Player.Empty:
-            self._emit_exception_event(f"Position {index} is already empty!", player)
+            self._emit_exception_event(
+                f"Position {index} is already empty!", player
+            )
             return
 
         if node == player:
-            self._emit_exception_event(f"{player} cannot remove their own pawn!", player)
+            self._emit_exception_event(
+                f"{player} cannot remove their own pawn!", player
+            )
             return
 
         if not self._can_remove_pawn(index, node):
-            self._emit_exception_event("Cannot remove a protected pawn!", player)
+            self._emit_exception_event(
+                "Cannot remove a protected pawn!", player
+            )
             return
 
+        # Remove the opponent's pawn exactly once.
         self._update_board(lambda b: b.set(index, Player.Empty))
-        state.update(lambda ps: ps.set_moving_phase())
-
-        # set back flying phase if player has 3 or less pawns on board after removal
-        if self._should_player_fly(player):
-            self._identify_player_state_holder(player).update(lambda ps: ps.set_flying_phase())
-
-        # set back placing phase if player has pawns left to place after removal
-        if self._should_player_place(player):
-            self._identify_player_state_holder(player).update(lambda ps: ps.set_placing_phase())
 
         self._emit_event(PlayerRemovedPawnEvent(player, index))
 
-        if self._should_player_lose(node):
-            self._end(player)
-            return
+        # Check defeat only after the opponent has finished Placing.
+        if not self._should_player_place(node):
+            if self._should_player_lose(node):
+                self._end(player)
+                return
 
-        if self._pawns_on_board_count(node) == PLAYER_FLYING_PAWNS_COUNT:
-            self._identify_player_state_holder(node).update(
-                lambda ps: ps.set_flying_phase()
-            )
+            if self._pawns_on_board_count(node) == PLAYER_FLYING_PAWNS_COUNT:
+                opponent_state = self._identify_player_state_holder(node)
+                opponent_state.update(lambda ps: ps.set_flying_phase())
 
-        if self._pawns_on_board_count(node) == PLAYER_FLYING_PAWNS_COUNT:
+        # Restore the capturing player's previous gameplay phase.
+        if self._should_player_place(player):
+            state.update(lambda ps: ps.set_placing_phase())
+
+        elif self._should_player_fly(player):
             state.update(lambda ps: ps.set_flying_phase())
+
         else:
             state.update(lambda ps: ps.set_moving_phase())
 
