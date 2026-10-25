@@ -33,3 +33,10 @@ class Vector2:
 
     def __pow__(self, power: int | float):
         return Vector2(self.x ** power, self.y ** power)
+
+    @staticmethod
+    def lerp(a: Vector2, b: Vector2, t: float):
+        return Vector2(
+            a.x + (b.x - a.x) * t,
+            a.y + (b.y - a.y) * t,
+        )
