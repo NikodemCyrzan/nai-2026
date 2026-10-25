@@ -1,15 +1,15 @@
 from engine.component_executors.game_loop import GameLoop
 from engine.component_executors.physics_context import PhysicsContext
 from engine.component_executors.render_context import RenderContext
-from engine.components.loop_debugger import LoopDebugger
+from engine.components.loop_debugger import LoopDebugger, LogType
 from engine.models.game_object import GameObject
 from engine.models.terrain import Terrain
 
 
-def create_debugger(setup=False, render=False, physics=False):
+def create_loop_debugger(log_types: set[LogType], setup=False, render=False, physics=False):
     comp = []
     go = GameObject(comp)
-    comp.append(LoopDebugger(go, setup, render, physics))
+    comp.append(LoopDebugger(go, log_types, setup, render, physics))
 
     return go
 
@@ -20,7 +20,7 @@ class Game:
         physics_ctx = PhysicsContext(terrain)
 
         game_objects = [
-            create_debugger(render=True)
+            create_loop_debugger({LogType.DELTA_ERRORS}, physics=True)
         ]
 
         loop = GameLoop(game_objects, render_ctx, physics_ctx)

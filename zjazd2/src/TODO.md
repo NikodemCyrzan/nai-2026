@@ -16,9 +16,20 @@ terenu w kierunku `velocity`. Niech też przyjmuje offset w konstruktorze.
 
 Komponent AI, który będzie przyjmował czujniki i za pomocą logiki rozmytej decydował jak mocno silniki powinny pracować.
 
+## `RenderContext`
+
+Przygotować `RenderContext` żeby dało się w nim dodawać rzeczy do wyrenderowania.
+
 ## Komponent kamery
 
 Komponent, który będzie miał wpływ na to, jak rzeczy renderują się na ekranie, oraz będzie pozwalał śledzić `GameObject`.
+Będzie trzeba przygotować prostą macierz, która będzie przenosić rzeczy z przestrzeni świata na przestrzeń 
+kamery, oraz w `RenderContext` zbierać jakoś wszystko, co ma zostać wyrenderowane w danej klatce.
+
+## Silnik graficzny
+
+Wszystko, co zostanie dodane w `RenderContext` do wyrenderowania w danej klatce musi zostać wyrenderowane używając `PyQt6` 
+lub innej może lepszej do tego zadania biblioteki.
 
 ## Komponent Input Controller
 
