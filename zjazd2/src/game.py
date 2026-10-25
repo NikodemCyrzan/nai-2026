@@ -1,7 +1,7 @@
 from engine.component_executors.game_loop import GameLoop
 from engine.component_executors.physics_context import PhysicsContext
 from engine.component_executors.render_context import RenderContext
-from engine.components.LoopDebugger import LoopDebugger
+from engine.components.loop_debugger import LoopDebugger
 from engine.models.game_object import GameObject
 from engine.models.terrain import Terrain
 
