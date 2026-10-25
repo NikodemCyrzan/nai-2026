@@ -27,6 +27,7 @@ class GameLoop:
 
         while self._running:
             now = time.perf_counter()
+            real_frame_time = now - previous
             frame_time = min(now - previous, self.MAX_FRAME_TIME)
             previous = now
             accumulator += frame_time
@@ -36,7 +37,7 @@ class GameLoop:
                 accumulator -= dt
 
             alpha = accumulator / dt
-            self._component_executor.execute_render(self._render_context, alpha)
+            self._component_executor.execute_render(self._render_context, alpha, real_frame_time)
 
     def stop_loop(self):
         self._running = False

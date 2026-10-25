@@ -19,11 +19,11 @@ class LoopDebugger(Component):
 
         print("== setup")
 
-    def on_render_update(self, ctx: RenderContext, delta: float):
+    def on_render_update(self, ctx: RenderContext, alpha: float, delta: float):
         if not self._render:
             return
 
-        print(f"== render delta={delta}ms")
+        print(f"== render alpha={alpha * 100:.2f}% delta={delta * 1000:.4f}ms")
 
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
         if not self._physics:

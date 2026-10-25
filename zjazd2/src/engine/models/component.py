@@ -16,7 +16,7 @@ class Component:
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
         pass
 
-    def on_render_update(self, ctx: RenderContext, delta: float):
+    def on_render_update(self, ctx: RenderContext, alpha: float, delta: float):
         pass
 
     def on_setup(self):

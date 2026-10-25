@@ -8,5 +8,5 @@ class TerrainRenderer(Component):
         super().__init__(go)
         self._terrain = terrain
 
-    def on_render_update(self, ctx, delta: float):
+    def on_render_update(self, ctx, alpha: float, delta: float):
         pass

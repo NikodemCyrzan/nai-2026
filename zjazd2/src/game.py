@@ -20,7 +20,7 @@ class Game:
         physics_ctx = PhysicsContext(terrain)
 
         game_objects = [
-            create_debugger(physics=True)
+            create_debugger(render=True)
         ]
 
         loop = GameLoop(game_objects, render_ctx, physics_ctx)

@@ -2,7 +2,7 @@ from ..models.terrain import Terrain
 
 class PhysicsContext:
     _GRAVITY = 9.81
-    _TICK_RATE = 1
+    _TICK_RATE = 50
     _DELTA = 1.0 / _TICK_RATE
 
     def __init__(self, terrain: Terrain):
