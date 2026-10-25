@@ -2,6 +2,7 @@ import math
 
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QBrush, QPainter, QPainterPath, QPen, QPixmap, QPolygonF
+from PySide6.QtSvg import QSvgRenderer
 
 from ..models.vector2 import Vector2
 
@@ -48,3 +49,12 @@ class Renderer:
         p.setPen(pen)
         p.setBrush(brush)
         p.drawPolygon(polygon)
+
+    def draw_svg(self, svg: QSvgRenderer, target: QRectF, pos: Vector2, rotation: float) -> None:
+        p = self._painter
+        assert p is not None
+
+        prepare_painter(p, pos, rotation)
+        p.scale(1, -1)
+        svg.render(p, target)
+        p.restore()

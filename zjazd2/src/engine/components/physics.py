@@ -1,8 +1,16 @@
 import math
+from typing import TYPE_CHECKING
 from .collider import Collider
 from ..models.component import Component
 from ..models.game_object import GameObject
 from ..models.vector2 import Vector2
+
+if TYPE_CHECKING:
+    from ..component_executors.physics_context import PhysicsContext
+    from ..models.terrain import Terrain
+
+
+Contact = tuple[float, float, float, float, float]
 
 
 class Physics(Component):
@@ -23,6 +31,11 @@ class Physics(Component):
         self._inertia = inertia if inertia is not None else self._estimate_inertia()
         assert self._inertia > 0.0
 
+        self._position = go.position.copy()
+        self._rotation = go.rotation
+        self._prev_position = self._position.copy()
+        self._prev_rotation = self._rotation
+
         self._velocity = Vector2()
         self._acceleration = Vector2()
         self._angular_velocity = 0.0
@@ -35,6 +48,16 @@ class Physics(Component):
     @property
     def inertia(self) -> float:
         return self._inertia
+
+    @property
+    def position(self) -> Vector2:
+        """Simulation position (not interpolated). Use this in physics-update logic."""
+        return self._position.copy()
+
+    @property
+    def rotation(self) -> float:
+        """Simulation rotation in radians (not interpolated)."""
+        return self._rotation
 
     @property
     def velocity(self) -> Vector2:
@@ -55,6 +78,18 @@ class Physics(Component):
     @angular_velocity.setter
     def angular_velocity(self, value: float) -> None:
         self._angular_velocity = value
+
+    def teleport(self, position: Vector2, rotation: float | None = None) -> None:
+        """Move instantly without interpolating from the old position."""
+        self._position = position.copy()
+        self._prev_position = position.copy()
+        if rotation is not None:
+            self._rotation = rotation
+            self._prev_rotation = rotation
+        go = self.game_object
+        go.position.x = position.x
+        go.position.y = position.y
+        go.rotation = self._rotation
 
     def add_force(self, force: Vector2, point: Vector2 | None = None) -> None:
         """Continuous force (N) for the next tick. point: local offset from center of mass. Call every tick."""
@@ -84,8 +119,31 @@ class Physics(Component):
         """Instant angular velocity change (rad/s), inertia-independent. Call once."""
         self._angular_velocity += dw
 
+    def on_physics_update(self, ctx: PhysicsContext, delta: float):
+        self._prev_position = self._position.copy()
+        self._prev_rotation = self._rotation
+
+        self._velocity = self._velocity + (self._acceleration + Vector2(0.0, -ctx.gravity)) * delta
+        self._angular_velocity += self._angular_acceleration * delta
+        self._acceleration = Vector2()
+        self._angular_acceleration = 0.0
+
+        self._position.x += self._velocity.x * delta
+        self._position.y += self._velocity.y * delta
+        self._rotation += self._angular_velocity * delta
+
+        contacts = self._find_contacts(ctx.terrain, delta)
+        if contacts:
+            self._solve_contacts(contacts)
+
+    def on_interpolate(self, alpha: float):
+        go = self.game_object
+        go.position.x = self._prev_position.x + (self._position.x - self._prev_position.x) * alpha
+        go.position.y = self._prev_position.y + (self._position.y - self._prev_position.y) * alpha
+        go.rotation = self._prev_rotation + (self._rotation - self._prev_rotation) * alpha
+
     def _torque(self, force: Vector2, point: Vector2) -> float:
-        c, s = math.cos(self.game_object.rotation), math.sin(self.game_object.rotation)
+        c, s = math.cos(self._rotation), math.sin(self._rotation)
         rx = point.x * c - point.y * s
         ry = point.x * s + point.y * c
         return rx * force.y - ry * force.x
@@ -109,30 +167,12 @@ class Physics(Component):
         self._velocity.y += jy / self._mass
         self._angular_velocity += (rx * jy - ry * jx) / self._inertia
 
-    def on_physics_update(self, ctx, delta: float):
-        go = self.game_object
-        pos = go.position
-
-        self._velocity = self._velocity + (self._acceleration + Vector2(0.0, -ctx.gravity)) * delta
-        self._angular_velocity += self._angular_acceleration * delta
-        self._acceleration = Vector2()
-        self._angular_acceleration = 0.0
-
-        pos.x += self._velocity.x * delta
-        pos.y += self._velocity.y * delta
-        go.rotation += self._angular_velocity * delta
-
-        contacts = self._find_contacts(ctx.terrain, delta)
-        if contacts:
-            self._solve_contacts(contacts)
-
-    def _find_contacts(self, terrain, delta: float) -> list[tuple[float, float, float, float, float]]:
-        go = self.game_object
-        pos = go.position
-        c, s = math.cos(go.rotation), math.sin(go.rotation)
+    def _find_contacts(self, terrain: Terrain, delta: float) -> list[Contact]:
+        pos = self._position
+        c, s = math.cos(self._rotation), math.sin(self._rotation)
         step = delta / self.SOLVER_ITERATIONS
 
-        contacts = []
+        contacts: list[Contact] = []
         deepest = 0.0
 
         for col in self._colliders:
@@ -156,7 +196,7 @@ class Physics(Component):
         pos.y += deepest
         return contacts
 
-    def _solve_contacts(self, contacts: list[tuple[float, float, float, float, float]]) -> None:
+    def _solve_contacts(self, contacts: list[Contact]) -> None:
         inv_m = 1.0 / self._mass
         inv_i = 1.0 / self._inertia
 

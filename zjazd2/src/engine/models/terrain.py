@@ -1,4 +1,5 @@
 import math
+from .vector2 import Vector2
 from ..mathematics.perlin_noise import PerlinNoise
 
 
@@ -31,12 +32,12 @@ class Terrain:
     def slope_at(self, x: float, eps: float = 0.25) -> float:
         return (self.height_at(x + eps) - self.height_at(x - eps)) / (2 * eps)
 
-    def normal_at(self, x: float) -> tuple[float, float]:
+    def normal_at(self, x: float) -> Vector2:
         slope = self.slope_at(x)
         length = math.sqrt(1.0 + slope * slope)
-        return -slope / length, 1.0 / length
+        return Vector2(-slope / length, 1.0 / length)
 
-    def tangent_at(self, x: float) -> tuple[float, float]:
+    def tangent_at(self, x: float) -> Vector2:
         slope = self.slope_at(x)
         length = math.sqrt(1.0 + slope * slope)
-        return 1.0 / length, slope / length
+        return Vector2(1.0 / length, slope / length)
