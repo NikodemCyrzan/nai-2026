@@ -1,3 +1,6 @@
+import math
+
+
 class Vector2:
     def __init__(self, x: int | float=0.0, y: int | float=0.0):
         self.x = x
@@ -28,8 +31,10 @@ class Vector2:
     def __neg__(self):
         return Vector2(-self.x, -self.y)
 
-    def __truediv__(self, other: Vector2):
-        return self ** -1
+    def __truediv__(self, other: Vector2 | int | float):
+        if isinstance(other, Vector2):
+            return Vector2(self.x / other.x, self.y / other.y)
+        return Vector2(self.x / other, self.y / other)
 
     def __pow__(self, power: int | float):
         return Vector2(self.x ** power, self.y ** power)
@@ -40,3 +45,10 @@ class Vector2:
             a.x + (b.x - a.x) * t,
             a.y + (b.y - a.y) * t,
         )
+
+    def dot(self, other: Vector2) -> float:
+        return self.x * other.x + self.y * other.y
+
+    @property
+    def length(self) -> float:
+        return math.hypot(self.x, self.y)
