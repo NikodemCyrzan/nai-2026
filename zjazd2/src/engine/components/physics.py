@@ -1,5 +1,11 @@
+from __future__ import annotations
 import math
+import random
 from typing import TYPE_CHECKING
+
+from PySide6.QtCore import QPoint
+from PySide6.QtGui import QBrush, QPen, QColor
+
 from .collider import Collider
 from ..models.component import Component
 from ..models.game_object import GameObject
@@ -119,6 +125,20 @@ class Physics(Component):
         """Instant angular velocity change (rad/s), inertia-independent. Call once."""
         self._angular_velocity += dw
 
+    def on_render_update(self, ctx, alpha: float, delta: float):
+        go = self.game_object
+
+        for col in self._colliders:
+            c, s = math.cos(go.rotation), math.sin(go.rotation)
+            ox, oy = col.offset.x, col.offset.y
+            cx = go.position.x + ox * c - oy * s
+            cy = go.position.y + ox * s + oy * c
+            corners = [QPoint(cx + lx * c - ly * s, cy + lx * s + ly * c) for lx, ly in col.corners]
+            pen = QPen()
+            pen.setColor(QColor(200, 30, 30))
+            pen.setWidth(0.1)
+            ctx.renderer.draw_polygon(corners, pen, QBrush())
+
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
         self._prev_position = self._position.copy()
         self._prev_rotation = self._rotation
@@ -172,28 +192,59 @@ class Physics(Component):
         c, s = math.cos(self._rotation), math.sin(self._rotation)
         step = delta / self.SOLVER_ITERATIONS
 
-        contacts: list[Contact] = []
+        contacts = []
         deepest = 0.0
+
+        SAMPLE_SPACING = 2.0  # World units
 
         for col in self._colliders:
             ox, oy = col.offset.x, col.offset.y
+
             cx = pos.x + ox * c - oy * s
             cy = pos.y + ox * s + oy * c
 
-            corners = sorted(
-                ((cx + lx * c - ly * s, cy + lx * s + ly * c) for lx, ly in col.corners),
-                key=lambda p: p[1],
-            )
+            corners = [
+                (
+                    cx + lx * c - ly * s,
+                    cy + lx * s + ly * c,
+                )
+                for lx, ly in col.corners
+            ]
 
-            for x, y in corners[:2]:
-                penetration = terrain.height_at(x) - y
-                if penetration > 0.0:
+            decay = 1.0 - math.exp(-col.drag * step)
+
+            for i in range(len(corners)):
+                ax, ay = corners[i]
+                bx, by = corners[(i + 1) % len(corners)]
+
+                length = math.hypot(bx - ax, by - ay)
+                samples = max(1, math.ceil(length / SAMPLE_SPACING))
+
+                for j in range(samples + 1):
+                    t = j / samples
+
+                    x = ax + (bx - ax) * t
+                    y = ay + (by - ay) * t
+
+                    penetration = terrain.height_at(x) - y
+
+                    if penetration <= 0.0:
+                        continue
+
                     deepest = max(deepest, penetration)
+
                     tangent = terrain.tangent_at(x)
-                    decay = 1.0 - math.exp(-col.drag * step)
-                    contacts.append((x - pos.x, y - pos.y, tangent.x, tangent.y, decay))
+
+                    contacts.append((
+                        x - pos.x,
+                        y - pos.y,
+                        tangent.x,
+                        tangent.y,
+                        decay,
+                    ))
 
         pos.y += deepest
+
         return contacts
 
     def _solve_contacts(self, contacts: list[Contact]) -> None:

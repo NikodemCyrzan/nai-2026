@@ -1,3 +1,4 @@
+import copy
 import math
 from ..models.component import Component
 
@@ -16,4 +17,5 @@ class Camera(Component):
             k = 1.0 - math.exp(-self._smoothing * delta)
             pos.x += (goal.x - pos.x) * k
             pos.y += (goal.y - pos.y) * k
+
         ctx.set_view(pos, self.pixels_per_unit)

@@ -1,4 +1,5 @@
 import time
+from collections.abc import Callable
 from .component_executor import ComponentExecutor
 from .physics_context import PhysicsContext
 from .render_context import RenderContext
@@ -8,13 +9,20 @@ from ..models.game_object import GameObject
 class GameLoop:
     MAX_FRAME_TIME = 0.25
 
-    def __init__(self, game_objects: list[GameObject], render_context: RenderContext, physics_context: PhysicsContext):
+    def __init__(
+        self,
+        game_objects: list[GameObject],
+        render_context: RenderContext,
+        physics_context: PhysicsContext,
+        before_physics_step: Callable[[], None] | None = None,
+    ):
         assert physics_context.delta > 0
         self._component_executor = ComponentExecutor(game_objects)
         self._render_context = render_context
         self._physics_context = physics_context
         self._accumulator = 0.0
         self._previous: float | None = None
+        self._before_physics_step = before_physics_step
 
     def setup_components(self):
         self._component_executor.execute_setup()
@@ -30,6 +38,8 @@ class GameLoop:
         self._accumulator += min(real_frame_time, self.MAX_FRAME_TIME)
 
         while self._accumulator >= dt:
+            if self._before_physics_step is not None:
+                self._before_physics_step()
             self._component_executor.execute_physics(self._physics_context, dt)
             self._accumulator -= dt
 
