@@ -1,28 +1,33 @@
-from PySide6.QtCore import QPoint
-from PySide6.QtGui import QPolygon, QPen, QBrush, QColor
-
+from ..models.color import Color
 from ..models.component import Component
 from ..models.game_object import GameObject
 from ..models.terrain import Terrain
+from ..models.vector2 import Vector2
 
 
 class TerrainRenderer(Component):
-    def __init__(self, go: GameObject, terrain: Terrain):
+    """Draws the terrain as a filled polygon. Must come after the Camera in render order."""
+
+    MARGIN = 100.0
+    SAMPLE_SPACING = 1.0
+    BOTTOM = -1000.0
+
+    def __init__(self, go: GameObject, terrain: Terrain,
+                 fill: Color = Color(190, 190, 190), stroke: Color = Color(160, 160, 160)):
         super().__init__(go)
         self._terrain = terrain
+        self._fill = fill
+        self._stroke = stroke
 
     def on_render_update(self, ctx, alpha: float, delta: float):
-        left = int(ctx.view_left - 100)
-        right = int(ctx.view_right + 100)
+        left = ctx.view_left - self.MARGIN
+        right = ctx.view_right + self.MARGIN
+        count = int((right - left) / self.SAMPLE_SPACING) + 1
 
-        arr = [QPoint(x, int(self._terrain.height_at(x))) for x in range(left, right)]
-        arr.insert(0, QPoint(left, -1000))
-        arr.append(QPoint(right, -1000))
-        p = QPolygon(arr)
+        points = [Vector2(left, self.BOTTOM)]
+        for i in range(count + 1):
+            x = left + i * self.SAMPLE_SPACING
+            points.append(Vector2(x, self._terrain.height_at(x)))
+        points.append(Vector2(points[-1].x, self.BOTTOM))
 
-        pen = QPen(QColor(160,160,160))
-        pen.setWidth(0.9)
-
-        brush = QBrush(QColor(190,190,190))
-
-        ctx.renderer.draw_polygon(p, pen, brush)
+        ctx.renderer.draw_polygon(points, fill=self._fill, stroke=self._stroke)

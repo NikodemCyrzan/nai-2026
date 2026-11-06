@@ -22,7 +22,7 @@ class GameObject:
     def components(self):
         return self._components
 
-    def get_component[T](self, component_type: type[Component]) -> T:
+    def get_component[T: Component](self, component_type: type[T]) -> T | None:
         for comp in self._components:
             if isinstance(comp, component_type):
                 return comp

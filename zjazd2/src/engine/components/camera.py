@@ -1,4 +1,3 @@
-import copy
 import math
 from ..models.component import Component
 

@@ -1,62 +1,42 @@
 import traceback
-from collections.abc import Callable
 
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication
 
+from ..models.input import Drag, Input
+from ..models.vector2 import Vector2
+
+
+def _to_vector(p: QPointF) -> Vector2:
+    return Vector2(p.x(), p.y())
+
 
 class GameWidget(QOpenGLWidget):
-    def __init__(
-        self,
-        game_loop,
-        render_context,
-        on_drag: Callable[[QPoint, QPoint], None] | None = None,
-        on_key: Callable[[int, bool], None] | None = None,
-    ):
+    def __init__(self, game_loop, render_context, input: Input):
         super().__init__()
         self._loop = game_loop
         self._ctx = render_context
-        self._on_drag = on_drag
-        self._on_key = on_key
-        self._drag_start: QPoint | None = None
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self._input = input
+        self._drag_start: Vector2 | None = None
         self.frameSwapped.connect(self.update)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            self.setFocus()
-            self._drag_start = event.position().toPoint()
+            self._drag_start = _to_vector(event.position())
             event.accept()
             return
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            start = self._drag_start
+            if self._drag_start is not None:
+                self._input.push_drag(Drag(self._drag_start, _to_vector(event.position())))
             self._drag_start = None
-            if start is not None and self._on_drag is not None:
-                self._on_drag(start, event.position().toPoint())
             event.accept()
             return
         super().mouseReleaseEvent(event)
-
-    def keyPressEvent(self, event):
-        if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right):
-            if not event.isAutoRepeat() and self._on_key is not None:
-                self._on_key(event.key(), True)
-            event.accept()
-            return
-        super().keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right):
-            if not event.isAutoRepeat() and self._on_key is not None:
-                self._on_key(event.key(), False)
-            event.accept()
-            return
-        super().keyReleaseEvent(event)
 
     def paintGL(self):
         painter = QPainter(self)

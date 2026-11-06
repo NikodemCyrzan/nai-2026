@@ -1,10 +1,6 @@
 from __future__ import annotations
 import math
-import random
 from typing import TYPE_CHECKING
-
-from PySide6.QtCore import QPoint
-from PySide6.QtGui import QBrush, QPen, QColor
 
 from .collider import Collider
 from ..models.component import Component
@@ -21,6 +17,7 @@ Contact = tuple[float, float, float, float, float]
 
 class Physics(Component):
     SOLVER_ITERATIONS = 4
+    TERRAIN_SAMPLE_SPACING = 2.0
 
     def __init__(
         self,
@@ -54,6 +51,10 @@ class Physics(Component):
     @property
     def inertia(self) -> float:
         return self._inertia
+
+    @property
+    def colliders(self) -> tuple[Collider, ...]:
+        return tuple(self._colliders)
 
     @property
     def position(self) -> Vector2:
@@ -125,20 +126,6 @@ class Physics(Component):
         """Instant angular velocity change (rad/s), inertia-independent. Call once."""
         self._angular_velocity += dw
 
-    def on_render_update(self, ctx, alpha: float, delta: float):
-        go = self.game_object
-
-        for col in self._colliders:
-            c, s = math.cos(go.rotation), math.sin(go.rotation)
-            ox, oy = col.offset.x, col.offset.y
-            cx = go.position.x + ox * c - oy * s
-            cy = go.position.y + ox * s + oy * c
-            corners = [QPoint(cx + lx * c - ly * s, cy + lx * s + ly * c) for lx, ly in col.corners]
-            pen = QPen()
-            pen.setColor(QColor(200, 30, 30))
-            pen.setWidth(0.1)
-            ctx.renderer.draw_polygon(corners, pen, QBrush())
-
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
         self._prev_position = self._position.copy()
         self._prev_rotation = self._rotation
@@ -189,62 +176,36 @@ class Physics(Component):
 
     def _find_contacts(self, terrain: Terrain, delta: float) -> list[Contact]:
         pos = self._position
-        c, s = math.cos(self._rotation), math.sin(self._rotation)
         step = delta / self.SOLVER_ITERATIONS
 
-        contacts = []
+        contacts: list[Contact] = []
         deepest = 0.0
 
-        SAMPLE_SPACING = 2.0  # World units
-
         for col in self._colliders:
-            ox, oy = col.offset.x, col.offset.y
-
-            cx = pos.x + ox * c - oy * s
-            cy = pos.y + ox * s + oy * c
-
-            corners = [
-                (
-                    cx + lx * c - ly * s,
-                    cy + lx * s + ly * c,
-                )
-                for lx, ly in col.corners
-            ]
-
+            corners = col.world_corners(pos, self._rotation)
             decay = 1.0 - math.exp(-col.drag * step)
 
             for i in range(len(corners)):
-                ax, ay = corners[i]
-                bx, by = corners[(i + 1) % len(corners)]
+                a = corners[i]
+                b = corners[(i + 1) % len(corners)]
 
-                length = math.hypot(bx - ax, by - ay)
-                samples = max(1, math.ceil(length / SAMPLE_SPACING))
+                length = math.hypot(b.x - a.x, b.y - a.y)
+                samples = max(1, math.ceil(length / self.TERRAIN_SAMPLE_SPACING))
 
                 for j in range(samples + 1):
                     t = j / samples
-
-                    x = ax + (bx - ax) * t
-                    y = ay + (by - ay) * t
+                    x = a.x + (b.x - a.x) * t
+                    y = a.y + (b.y - a.y) * t
 
                     penetration = terrain.height_at(x) - y
-
                     if penetration <= 0.0:
                         continue
 
                     deepest = max(deepest, penetration)
-
                     tangent = terrain.tangent_at(x)
-
-                    contacts.append((
-                        x - pos.x,
-                        y - pos.y,
-                        tangent.x,
-                        tangent.y,
-                        decay,
-                    ))
+                    contacts.append((x - pos.x, y - pos.y, tangent.x, tangent.y, decay))
 
         pos.y += deepest
-
         return contacts
 
     def _solve_contacts(self, contacts: list[Contact]) -> None:
