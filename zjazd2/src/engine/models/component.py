@@ -7,6 +7,8 @@ if TYPE_CHECKING:
     from ..component_executors.render_context import RenderContext
 
 class Component:
+    """Base class for everything attached to a game object."""
+
     def __init__(self, go: GameObject):
         self._game_object = go
         self.enabled = True
@@ -16,13 +18,17 @@ class Component:
         return self._game_object
 
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
+        """Called on every physics step."""
         pass
 
     def on_interpolate(self, alpha: float):
+        """Called before drawing to smooth movement."""
         pass
 
     def on_render_update(self, ctx: RenderContext, alpha: float, delta: float):
+        """Called on every frame to draw."""
         pass
 
     def on_setup(self):
+        """Called once before the game starts."""
         pass

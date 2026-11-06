@@ -14,12 +14,15 @@ def _qcolor(color: Color) -> QColor:
 
 
 def prepare_painter(p: QPainter, pos: Vector2, rotation: float):
+    """Moves and rotates the painter to an object."""
     p.save()
     p.translate(pos.x, pos.y)
     p.rotate(math.degrees(rotation))
 
 
 class Renderer:
+    """Draws shapes and images on the screen."""
+
     def __init__(self):
         self._painter: QPainter | None = None
 
@@ -30,6 +33,7 @@ class Renderer:
         self._painter = None
 
     def draw_path(self, path: QPainterPath, pos: Vector2, rotation: float, pen: QPen, brush: QBrush) -> None:
+        """Draws a shape at an object position."""
         p = self._painter
         assert p is not None
 
@@ -40,6 +44,7 @@ class Renderer:
         p.restore()
 
     def draw_pixmap(self, pixmap: QPixmap, target: QRectF, pos: Vector2, rotation: float) -> None:
+        """Draws a bitmap image at an object position."""
         p = self._painter
         assert p is not None
 
@@ -55,7 +60,7 @@ class Renderer:
         stroke: Color | None = None,
         stroke_width: float = 0.0,
     ) -> None:
-        """Draws a polygon in world coordinates."""
+        """Draws a polygon in world space."""
         p = self._painter
         assert p is not None
 
@@ -71,7 +76,7 @@ class Renderer:
         p.drawPolygon(QPolygonF([QPointF(v.x, v.y) for v in points]))
 
     def draw_line(self, a: Vector2, b: Vector2, color: Color, width: float = 0.0) -> None:
-        """Draws a line in world coordinates."""
+        """Draws a line in world space."""
         p = self._painter
         assert p is not None
 
@@ -88,7 +93,7 @@ class Renderer:
         stroke: Color | None = None,
         stroke_width: float = 0.0,
     ) -> None:
-        """Draws a circle in world coordinates."""
+        """Draws a circle in world space."""
         p = self._painter
         assert p is not None
 
@@ -104,6 +109,7 @@ class Renderer:
         p.drawEllipse(QPointF(center.x, center.y), radius, radius)
 
     def draw_svg(self, svg: QSvgRenderer, target: QRectF, pos: Vector2, rotation: float) -> None:
+        """Draws an SVG image at an object position."""
         p = self._painter
         assert p is not None
 

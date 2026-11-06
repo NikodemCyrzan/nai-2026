@@ -4,6 +4,8 @@ from ..models.vector2 import Vector2
 from ..render_pipeline.renderer import Renderer
 
 class RenderContext:
+    """Shared data for drawing a frame."""
+
     def __init__(self):
         self.renderer = Renderer()
         self.view_left = 0.0
@@ -23,6 +25,7 @@ class RenderContext:
         self._painter = None
 
     def set_view(self, center: Vector2, pixels_per_unit: float) -> None:
+        """Moves and zooms the view to show the world around a point."""
         assert self._painter is not None
 
         t = QTransform()

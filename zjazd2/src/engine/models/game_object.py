@@ -8,6 +8,8 @@ if TYPE_CHECKING:
 
 
 class GameObject:
+    """Object in the game world with a position, rotation and components."""
+
     def __init__(
         self,
         components: list[Component],
@@ -23,6 +25,7 @@ class GameObject:
         return self._components
 
     def get_component[T: Component](self, component_type: type[T]) -> T | None:
+        """First component of the given type, or None."""
         for comp in self._components:
             if isinstance(comp, component_type):
                 return comp

@@ -4,6 +4,8 @@ from ..mathematics.perlin_noise import PerlinNoise
 
 
 class Terrain:
+    """Hilly terrain made from noise."""
+
     def __init__(
         self,
         seed: int = 0,
@@ -30,9 +32,11 @@ class Terrain:
         return h * self._amplitude
 
     def slope_at(self, x: float, eps: float = 0.25) -> float:
+        """Terrain steepness at a point."""
         return (self.height_at(x + eps) - self.height_at(x - eps)) / (2 * eps)
 
     def normal_at(self, x: float) -> Vector2:
+        """Direction pointing straight out of the terrain."""
         slope = self.slope_at(x)
         length = math.sqrt(1.0 + slope * slope)
         return Vector2(-slope / length, 1.0 / length)
@@ -45,9 +49,10 @@ class Terrain:
         step: float = 1.0,
         refine_iterations: int = 12,
     ) -> float | None:
-        """Distance along a ray to the terrain, or None if not hit."""
+        """Distance along a ray to the terrain, or None if it is not hit."""
 
         def clearance(t: float) -> float:
+            """Height of a point on the ray above the terrain."""
             x = origin.x + direction.x * t
             y = origin.y + direction.y * t
             return y - self.height_at(x)
@@ -72,6 +77,7 @@ class Terrain:
         return None
 
     def tangent_at(self, x: float) -> Vector2:
+        """Direction along the terrain surface."""
         slope = self.slope_at(x)
         length = math.sqrt(1.0 + slope * slope)
         return Vector2(1.0 / length, slope / length)

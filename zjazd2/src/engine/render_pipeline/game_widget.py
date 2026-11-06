@@ -14,6 +14,8 @@ def _to_vector(p: QPointF) -> Vector2:
 
 
 class GameWidget(QOpenGLWidget):
+    """Window that shows the game and reads the mouse."""
+
     def __init__(self, game_loop, render_context, input: Input):
         super().__init__()
         self._loop = game_loop
@@ -39,6 +41,7 @@ class GameWidget(QOpenGLWidget):
         super().mouseReleaseEvent(event)
 
     def paintGL(self):
+        """Runs one game loop tick and draws the frame."""
         painter = QPainter(self)
         try:
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)

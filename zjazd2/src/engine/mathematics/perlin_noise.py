@@ -3,6 +3,8 @@ import random
 
 
 class PerlinNoise:
+    """One dimensional Perlin noise for smooth random values."""
+
     def __init__(self, seed: int = 0):
         p = list(range(256))
         random.Random(seed).shuffle(p)
@@ -10,6 +12,7 @@ class PerlinNoise:
 
     @staticmethod
     def _fade(t: float) -> float:
+        """Smooths the blend between grid points."""
         return t * t * t * (t * (t * 6 - 15) + 10)
 
     @staticmethod
@@ -17,9 +20,11 @@ class PerlinNoise:
         return a + (b - a) * t
 
     def _grad(self, h: int, x: float) -> float:
+        """Random slope at a grid point."""
         return x if (h & 1) == 0 else -x
 
     def _noise(self, x: float) -> float:
+        """Noise value at a single point."""
         xi = math.floor(x)
         xf = x - xi
         xi &= 255
@@ -36,6 +41,7 @@ class PerlinNoise:
         persistence: float = 0.5,
         lacunarity: float = 2.0,
     ) -> float:
+        """Height between 0 and 1 made from several layers of noise."""
         total = 0.0
         amplitude = 1.0
         frequency = 1.0

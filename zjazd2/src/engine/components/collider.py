@@ -6,6 +6,8 @@ from ..models.vector2 import Vector2
 
 
 class Collider(Component):
+    """Rectangle used for collisions with the terrain."""
+
     def __init__(
         self,
         go: GameObject,
@@ -34,18 +36,21 @@ class Collider(Component):
 
     @property
     def drag(self) -> float:
+        """Friction against the terrain."""
         return self._drag
 
     @property
     def offset(self) -> Vector2:
+        """Position relative to the center of the body."""
         return self._offset
 
     @property
     def corners(self) -> tuple[tuple[float, float], ...]:
+        """Corners relative to the center of the rectangle."""
         return self._corners
 
     def world_corners(self, position: Vector2, rotation: float) -> list[Vector2]:
-        """Collider corners in world space."""
+        """Corners of the rectangle in world space."""
         c, s = math.cos(rotation), math.sin(rotation)
         ox, oy = self._offset.x, self._offset.y
         cx = position.x + ox * c - oy * s

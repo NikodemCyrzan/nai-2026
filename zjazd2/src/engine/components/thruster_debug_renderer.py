@@ -23,6 +23,7 @@ class ThrusterDebugRenderer(Component):
             raise RuntimeError("ThrusterDebugRenderer requires a ThrusterController on the same GameObject")
 
     def on_render_update(self, ctx, alpha: float, delta: float):
+        """Draws a flame for each working engine."""
         go = self.game_object
         for i, thruster in enumerate(self._controller.thrusters):
             share = self._controller.current_force(i) / thruster.max_force

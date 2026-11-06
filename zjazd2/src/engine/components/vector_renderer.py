@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 class VectorRenderer(Component):
+    """Draws an SVG image on a game object."""
+
     _cache: dict[str, QSvgRenderer] = {}
 
     def __init__(
@@ -35,6 +37,7 @@ class VectorRenderer(Component):
 
     @classmethod
     def _load(cls, svg_path: str) -> QSvgRenderer:
+        """Loads an SVG file once and reuses it."""
         svg = cls._cache.get(svg_path)
         if svg is None:
             svg = QSvgRenderer(svg_path)
@@ -44,6 +47,7 @@ class VectorRenderer(Component):
         return svg
 
     def on_render_update(self, ctx: RenderContext, alpha: float, delta: float):
+        """Draws the image at the object position."""
         if not self.visible:
             return
         go = self.game_object

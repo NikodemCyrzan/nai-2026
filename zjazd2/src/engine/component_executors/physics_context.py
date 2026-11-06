@@ -2,6 +2,8 @@ from ..models.input import Input
 from ..models.terrain import Terrain
 
 class PhysicsContext:
+    """Shared data for physics updates."""
+
     _GRAVITY = 9.81
     _TICK_RATE = 50
     _DELTA = 1.0 / _TICK_RATE
@@ -20,8 +22,10 @@ class PhysicsContext:
 
     @property
     def gravity(self):
+        """Gravity in meters per second squared."""
         return self._GRAVITY
 
     @property
     def delta(self):
+        """Length of one physics step in seconds."""
         return self._DELTA

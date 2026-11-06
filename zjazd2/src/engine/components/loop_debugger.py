@@ -7,11 +7,15 @@ from engine.models.game_object import GameObject
 
 
 class LogType(Enum):
+    """Kinds of information the loop debugger can print."""
+
     DELTA = auto()
     RENDER_CONTEXT = auto()
     PHYSICS_CONTEXT = auto()
 
 class LoopDebugger(Component):
+    """Prints timing information about the game loop."""
+
     def __init__(self, go: GameObject, log_types: set[LogType], setup=False, render=False, physics=False):
         super().__init__(go)
         self._last_physics: float | None = None
@@ -21,6 +25,7 @@ class LoopDebugger(Component):
         self._log_types = log_types
 
     def on_setup(self):
+        """Prints a message during setup."""
         if not self._setup:
             return
 
@@ -28,6 +33,7 @@ class LoopDebugger(Component):
             print("[INFO] setup")
 
     def on_render_update(self, ctx: RenderContext, alpha: float, delta: float):
+        """Prints frame timing."""
         if not self._render:
             return
 
@@ -35,6 +41,7 @@ class LoopDebugger(Component):
             print(f"[INFO] render alpha={alpha * 100:.2f}% delta={delta * 1000:.4f}ms")
 
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
+        """Prints physics step timing."""
         if not self._physics:
             return
 

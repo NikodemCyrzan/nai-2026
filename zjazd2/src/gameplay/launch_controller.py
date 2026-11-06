@@ -4,6 +4,8 @@ from engine.models.component import Component
 
 
 class LaunchController(Component):
+    """Launches the car with a mouse drag like a slingshot."""
+
     SPEED_PER_PIXEL = 0.1
     MAX_LAUNCH_SPEED = 40.0
 
@@ -17,6 +19,7 @@ class LaunchController(Component):
             raise RuntimeError("LaunchController requires a Physics component on the same GameObject")
 
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
+        """Launches the car opposite to each new drag."""
         for drag in ctx.input.consume_drags():
             pull = drag.delta
             distance = pull.length

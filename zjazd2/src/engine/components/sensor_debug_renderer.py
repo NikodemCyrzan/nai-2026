@@ -21,6 +21,7 @@ class SensorDebugRenderer(Component):
         self._sensors = [c for c in self.game_object.components if isinstance(c, Sensor)]
 
     def on_render_update(self, ctx, alpha: float, delta: float):
+        """Draws each sensor ray."""
         go = self.game_object
         r = self._marker_radius
 

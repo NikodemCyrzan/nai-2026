@@ -20,11 +20,12 @@ RANGES = {
 
 
 def _variable(fs: sf.FuzzySystem, name: str, sets: list) -> None:
+    """Adds a fuzzy variable with its fuzzy sets."""
     fs.add_linguistic_variable(name, sf.LinguisticVariable(sets, concept=name, universe_of_discourse=list(RANGES[name])))
 
 
 def create_braking_system() -> sf.FuzzySystem:
-    """Distance and approach speed of one side -> thrust of the engine on that side."""
+    """Fuzzy system that sets engine thrust from distance and approach speed."""
     fs = sf.FuzzySystem(show_banner=False, verbose=False)
     _variable(fs, "distance", [
         sf.TrapezoidFuzzySet(0.0, 0.0, 1.0, 3.0, term="very_close"),
@@ -73,7 +74,7 @@ def create_braking_system() -> sf.FuzzySystem:
 
 
 def create_leveling_system() -> sf.FuzzySystem:
-    """Tilt from the wanted angle and spin -> thrust shift between rear and front engine."""
+    """Fuzzy system that moves thrust between engines to turn the car."""
     fs = sf.FuzzySystem(show_banner=False, verbose=False)
     _variable(fs, "tilt", [
         sf.TrapezoidFuzzySet(-1.5, -1.5, -0.3, 0.0, term="nose_down"),
@@ -109,7 +110,7 @@ def create_leveling_system() -> sf.FuzzySystem:
 
 
 def infer(fs: sf.FuzzySystem, inputs: dict[str, float], output: str) -> float:
-    """Runs Mamdani inference for crisp inputs and returns the crisp output."""
+    """Runs fuzzy inference and returns one number."""
     for name, value in inputs.items():
         low, high = RANGES[name]
         fs.set_variable(name, min(max(value, low), high), verbose=False)
@@ -117,7 +118,7 @@ def infer(fs: sf.FuzzySystem, inputs: dict[str, float], output: str) -> float:
 
 
 class LandingAI(Component):
-    """Fuzzy-logic landing."""
+    """Fuzzy logic AI that lands the car safely."""
 
     REAR, FRONT = 0, 1
     LEVELING_SHARE = 0.4
@@ -138,6 +139,7 @@ class LandingAI(Component):
         self._sensors: dict[int, Sensor] = {}
 
     def on_setup(self):
+        """Finds the physics, engines and sensors."""
         go = self.game_object
         self._physics = go.get_component(Physics)
         self._thrusters = go.get_component(ThrusterController)
@@ -147,6 +149,7 @@ class LandingAI(Component):
         self._sensors = {self.REAR: sensors["rear"], self.FRONT: sensors["front"]}
 
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
+        """Sets the thrust of both engines."""
         physics = self._physics
         if physics.in_contact:
             return
@@ -168,7 +171,7 @@ class LandingAI(Component):
             self._thrusters.apply_force(thrust * self._thrusters.max_force(engine), engine)
 
     def _wanted_angle(self) -> float:
-        """Target car angle. Level when far from terrain and facing terrain when close."""
+        """Angle the car should have, level when far and facing the terrain when close."""
         hits = [s for s in self._sensors.values() if s.distance is not None]
         if not hits:
             return 0.0
@@ -190,7 +193,7 @@ class LandingAI(Component):
         return closeness * (surface + lean)
 
     def _approach_speed(self, sensor: Sensor) -> float:
-        """Speed of the sensor mount point toward the surface, along its normal."""
+        """How fast one side of the car moves toward the terrain."""
         physics = self._physics
         r = sensor.offset.rotated(physics.rotation)
         w = physics.angular_velocity

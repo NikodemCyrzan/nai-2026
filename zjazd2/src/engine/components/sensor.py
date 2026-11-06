@@ -13,8 +13,7 @@ if TYPE_CHECKING:
 
 
 class Sensor(Component):
-    """Measures the distance to the terrain and the angle of the surface it hits.
-    Looks straight down (look="down") or along the velocity (look="velocity")."""
+    """Measures the distance to the terrain and the angle of the surface it hits."""
 
     MIN_SPEED = 0.05
     DOWN = Vector2(0.0, -1.0)
@@ -45,6 +44,7 @@ class Sensor(Component):
 
     @property
     def offset(self) -> Vector2:
+        """Mount point relative to the center of the body."""
         return self._offset.copy()
 
     @property
@@ -53,12 +53,12 @@ class Sensor(Component):
 
     @property
     def distance(self) -> float | None:
-        """Distance to the terrain, or None if nothing is in range."""
+        """Distance to the terrain, or None when nothing is in range."""
         return self._distance
 
     @property
     def surface_angle(self) -> float | None:
-        """Angle (rad) of the surface where the ray hit, or None."""
+        """Angle of the surface that was hit, or None."""
         return self._surface_angle
 
     @property
@@ -67,9 +67,11 @@ class Sensor(Component):
         return self._direction.copy()
 
     def world_origin(self, position: Vector2, rotation: float) -> Vector2:
+        """Mount point in world space."""
         return position + self._offset.rotated(rotation)
 
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
+        """Takes a new measurement."""
         physics = self._physics
         velocity = physics.velocity
         if self._look == "velocity" and velocity.length >= self.MIN_SPEED:

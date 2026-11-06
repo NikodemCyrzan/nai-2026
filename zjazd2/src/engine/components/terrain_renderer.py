@@ -20,6 +20,7 @@ class TerrainRenderer(Component):
         self._stroke = stroke
 
     def on_render_update(self, ctx, alpha: float, delta: float):
+        """Draws the visible part of the terrain."""
         left = ctx.view_left - self.MARGIN
         right = ctx.view_right + self.MARGIN
         count = int((right - left) / self.SAMPLE_SPACING) + 1

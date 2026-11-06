@@ -31,6 +31,7 @@ DEBUG_LOOP_LOG: set[LogType] = set()
 
 
 def create_loop_debugger(log_types: set[LogType], setup=False, render=False, physics=False):
+    """Creates an object that prints loop timing."""
     comp = []
     go = GameObject(comp)
     comp.append(LoopDebugger(go, log_types, setup, render, physics))
@@ -45,6 +46,7 @@ def create_camera(target: GameObject | None = None):
     return go
 
 def create_terrain(terrain: Terrain):
+    """Creates the object that draws the terrain."""
     comp = []
     go = GameObject(comp)
     comp.append(TerrainRenderer(go, terrain))
@@ -52,8 +54,9 @@ def create_terrain(terrain: Terrain):
     return go
 
 def create_car(debug_colliders: bool = False, debug_sensors: bool = False, debug_thrust: bool = False):
+    """Creates the car with its engines, sensors and AI."""
     comp = []
-    go = GameObject(comp, Vector2(0.0, 100.0))
+    go = GameObject(comp, Vector2(0.0, 50.0))
     comp.append(VectorRenderer(go, "assets/roadster.svg", width=4.7))
     l_wheel_offset = Vector2(-1.4335, -0.2937)
     r_wheel_offset = Vector2(1.5627, -0.2937)
@@ -89,7 +92,10 @@ def create_car(debug_colliders: bool = False, debug_sensors: bool = False, debug
     return go
 
 class Game:
+    """Sets up and starts the game."""
+
     def __init__(self):
+        """Builds the level, the loop and the window."""
         terrain = Terrain(amplitude=35, octaves=2, lacunarity=4.5, persistence=1.5, scale=0.01, seed=42)
         input = Input()
         render_ctx = RenderContext()

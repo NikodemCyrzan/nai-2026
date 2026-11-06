@@ -4,6 +4,8 @@ import math
 
 
 class Vector2:
+    """2D vector with basic math."""
+
     def __init__(self, x: int | float = 0.0, y: int | float = 0.0):
         self.x = x
         self.y = y
@@ -39,6 +41,7 @@ class Vector2:
         return Vector2(self.x / other, self.y / other)
 
     def __pow__(self, power: int | float) -> Vector2:
+        """Raises both parts to a power."""
         return Vector2(self.x ** power, self.y ** power)
 
     @property
@@ -56,6 +59,7 @@ class Vector2:
         return Vector2(self.x * c - self.y * s, self.x * s + self.y * c)
 
     def normalized(self) -> Vector2:
+        """Vector with length 1 in the same direction."""
         length = self.length
         if length == 0:
             return Vector2(0, 0)
@@ -66,6 +70,7 @@ class Vector2:
 
     @staticmethod
     def lerp(a: Vector2, b: Vector2, t: float) -> Vector2:
+        """Point between two vectors."""
         return Vector2(
             a.x + (b.x - a.x) * t,
             a.y + (b.y - a.y) * t,

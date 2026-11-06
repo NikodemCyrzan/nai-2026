@@ -5,6 +5,8 @@ from ..models.vector2 import Vector2
 
 
 class Thruster:
+    """A single engine on the body."""
+
     def __init__(self, position: Vector2, max_force: float, direction: Vector2 | None = None):
         assert max_force > 0.0
         self._position = position.copy()
@@ -13,10 +15,12 @@ class Thruster:
 
     @property
     def max_force(self) -> float:
+        """Largest thrust of the engine."""
         return self._max_force
 
     @property
     def position(self) -> Vector2:
+        """Engine position relative to the center of the body."""
         return self._position.copy()
 
     @property
@@ -46,6 +50,7 @@ class ThrusterController(Component):
         self._thrusters.append(thruster)
 
     def max_force(self, thruster_index: int) -> float:
+        """Largest thrust of one engine."""
         return self._thrusters[thruster_index].max_force
 
     @property
@@ -53,14 +58,15 @@ class ThrusterController(Component):
         return list(self._thrusters)
 
     def current_force(self, thruster_index: int) -> float:
-        """Thrust (N) of the engine in the current tick."""
+        """Thrust of one engine in the current step."""
         return self._forces.get(thruster_index, 0.0)
 
     def on_physics_update(self, ctx, delta: float):
+        """Resets the recorded thrust for a new step."""
         self._forces = {}
 
     def apply_force(self, force: float, thruster_index: int | None = None) -> None:
-        """Sets engine thrust (N) for the next tick."""
+        """Fires an engine for the next step."""
         indices = range(len(self._thrusters)) if thruster_index is None else [thruster_index]
         for i, (thruster, direction) in zip(indices, self._selected(thruster_index)):
             clamped = min(max(force, 0.0), thruster.max_force)
@@ -68,10 +74,12 @@ class ThrusterController(Component):
             self._physics.add_force(direction * clamped, thruster.position)
 
     def apply_impulse(self, impulse: float, thruster_index: int | None = None) -> None:
+        """Gives an instant push from an engine."""
         for thruster, direction in self._selected(thruster_index):
             self._physics.add_impulse(direction * impulse, thruster.position)
 
     def _selected(self, thruster_index: int | None) -> list[tuple[Thruster, Vector2]]:
+        """Engines to use and the direction each one pushes."""
         assert self._physics is not None, "ThrusterController used before setup"
 
         if thruster_index is None:

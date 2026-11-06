@@ -3,6 +3,8 @@ from ..models.component import Component
 
 
 class Camera(Component):
+    """Camera that can smoothly follow a game object."""
+
     def __init__(self, go, target=None, pixels_per_unit: float = 20.0, smoothing: float = 5.0):
         super().__init__(go)
         self.target = target
@@ -10,6 +12,7 @@ class Camera(Component):
         self._smoothing = smoothing
 
     def on_render_update(self, ctx, alpha, delta):
+        """Moves the camera toward the target and sets the view."""
         pos = self.game_object.position
         if self.target:
             goal = self.target.position

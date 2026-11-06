@@ -19,6 +19,7 @@ class ColliderDebugRenderer(Component):
             raise RuntimeError("ColliderDebugRenderer requires a Physics component on the same GameObject")
 
     def on_render_update(self, ctx, alpha: float, delta: float):
+        """Draws an outline around each collider."""
         go = self.game_object
         for col in self._physics.colliders:
             ctx.renderer.draw_polygon(

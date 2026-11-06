@@ -6,6 +6,8 @@ from ..models.game_object import GameObject
 
 
 class GameLoop:
+    """Main loop with a fixed physics step and smooth rendering."""
+
     MAX_FRAME_TIME = 0.25
 
     def __init__(self, game_objects: list[GameObject], render_context: RenderContext, physics_context: PhysicsContext):
@@ -20,6 +22,7 @@ class GameLoop:
         self._component_executor.execute_setup()
 
     def tick(self):
+        """Runs the physics steps that are due and draws one frame."""
         now = time.perf_counter()
         if self._previous is None:
             self._previous = now
