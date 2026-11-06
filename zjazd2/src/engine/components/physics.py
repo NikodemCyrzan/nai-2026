@@ -1,5 +1,7 @@
+from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
+
 from .collider import Collider
 from ..models.component import Component
 from ..models.game_object import GameObject
@@ -15,6 +17,7 @@ Contact = tuple[float, float, float, float, float]
 
 class Physics(Component):
     SOLVER_ITERATIONS = 4
+    TERRAIN_SAMPLE_SPACING = 2.0
 
     def __init__(
         self,
@@ -48,6 +51,10 @@ class Physics(Component):
     @property
     def inertia(self) -> float:
         return self._inertia
+
+    @property
+    def colliders(self) -> tuple[Collider, ...]:
+        return tuple(self._colliders)
 
     @property
     def position(self) -> Vector2:
@@ -169,28 +176,33 @@ class Physics(Component):
 
     def _find_contacts(self, terrain: Terrain, delta: float) -> list[Contact]:
         pos = self._position
-        c, s = math.cos(self._rotation), math.sin(self._rotation)
         step = delta / self.SOLVER_ITERATIONS
 
         contacts: list[Contact] = []
         deepest = 0.0
 
         for col in self._colliders:
-            ox, oy = col.offset.x, col.offset.y
-            cx = pos.x + ox * c - oy * s
-            cy = pos.y + ox * s + oy * c
+            corners = col.world_corners(pos, self._rotation)
+            decay = 1.0 - math.exp(-col.drag * step)
 
-            corners = sorted(
-                ((cx + lx * c - ly * s, cy + lx * s + ly * c) for lx, ly in col.corners),
-                key=lambda p: p[1],
-            )
+            for i in range(len(corners)):
+                a = corners[i]
+                b = corners[(i + 1) % len(corners)]
 
-            for x, y in corners[:2]:
-                penetration = terrain.height_at(x) - y
-                if penetration > 0.0:
+                length = math.hypot(b.x - a.x, b.y - a.y)
+                samples = max(1, math.ceil(length / self.TERRAIN_SAMPLE_SPACING))
+
+                for j in range(samples + 1):
+                    t = j / samples
+                    x = a.x + (b.x - a.x) * t
+                    y = a.y + (b.y - a.y) * t
+
+                    penetration = terrain.height_at(x) - y
+                    if penetration <= 0.0:
+                        continue
+
                     deepest = max(deepest, penetration)
                     tangent = terrain.tangent_at(x)
-                    decay = 1.0 - math.exp(-col.drag * step)
                     contacts.append((x - pos.x, y - pos.y, tangent.x, tangent.y, decay))
 
         pos.y += deepest

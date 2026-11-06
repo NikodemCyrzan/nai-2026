@@ -1,4 +1,6 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
+
 from .vector2 import Vector2
 
 if TYPE_CHECKING:
@@ -19,3 +21,9 @@ class GameObject:
     @property
     def components(self):
         return self._components
+
+    def get_component[T: Component](self, component_type: type[T]) -> T | None:
+        for comp in self._components:
+            if isinstance(comp, component_type):
+                return comp
+        return None

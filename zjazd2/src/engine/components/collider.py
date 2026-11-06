@@ -1,3 +1,5 @@
+import math
+
 from ..models.component import Component
 from ..models.game_object import GameObject
 from ..models.vector2 import Vector2
@@ -41,3 +43,11 @@ class Collider(Component):
     @property
     def corners(self) -> tuple[tuple[float, float], ...]:
         return self._corners
+
+    def world_corners(self, position: Vector2, rotation: float) -> list[Vector2]:
+        """Corners in world space for a body at the given position/rotation."""
+        c, s = math.cos(rotation), math.sin(rotation)
+        ox, oy = self._offset.x, self._offset.y
+        cx = position.x + ox * c - oy * s
+        cy = position.y + ox * s + oy * c
+        return [Vector2(cx + lx * c - ly * s, cy + lx * s + ly * c) for lx, ly in self._corners]

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 
 
@@ -52,6 +54,12 @@ class Vector2:
     def rotated(self, angle: float) -> Vector2:
         c, s = math.cos(angle), math.sin(angle)
         return Vector2(self.x * c - self.y * s, self.x * s + self.y * c)
+
+    def normalized(self) -> Vector2:
+        length = self.length
+        if length == 0:
+            return Vector2(0, 0)
+        return self / length
 
     def copy(self) -> Vector2:
         return Vector2(self.x, self.y)

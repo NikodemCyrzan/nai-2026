@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 from PySide6.QtCore import QRectF
 from PySide6.QtSvg import QSvgRenderer

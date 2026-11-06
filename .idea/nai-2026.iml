@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/zjaz1/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/zjazd2/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/zjaz1/.venv" />
     </content>
