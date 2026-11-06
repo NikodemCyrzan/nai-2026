@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 class Component:
     def __init__(self, go: GameObject):
         self._game_object = go
+        self.enabled = True
 
     @property
     def game_object(self) -> GameObject:

@@ -15,7 +15,8 @@ class ComponentExecutor:
     def execute_physics(self, ctx: PhysicsContext, delta: float):
         for go in self._game_objects:
             for comp in go.components:
-                comp.on_physics_update(ctx, delta)
+                if comp.enabled:
+                    comp.on_physics_update(ctx, delta)
 
     def execute_interpolate(self, alpha: float):
         for go in self._game_objects:
@@ -25,4 +26,5 @@ class ComponentExecutor:
     def execute_render(self, ctx: RenderContext, alpha: float, delta: float):
         for go in self._game_objects:
             for comp in go.components:
-                comp.on_render_update(ctx, alpha, delta)
+                if comp.enabled:
+                    comp.on_render_update(ctx, alpha, delta)

@@ -5,10 +5,15 @@ from ..models.vector2 import Vector2
 
 
 class Thruster:
-    def __init__(self, position: Vector2, direction: Vector2 | None = None):
-        """position: local offset from center of mass. direction: local push direction (default: up)."""
+    def __init__(self, position: Vector2, max_force: float, direction: Vector2 | None = None):
+        assert max_force > 0.0
         self._position = position.copy()
+        self._max_force = max_force
         self._direction = (direction or Vector2(0.0, 1.0)).normalized()
+
+    @property
+    def max_force(self) -> float:
+        return self._max_force
 
     @property
     def position(self) -> Vector2:
@@ -20,12 +25,13 @@ class Thruster:
 
 
 class ThrusterController(Component):
-    """Applies thrust through the object's Physics"""
+    """Controls the engines of a body."""
 
     def __init__(self, go: GameObject, thrusters: list[Thruster] | None = None):
         super().__init__(go)
         self._thrusters = list(thrusters or [])
         self._physics: Physics | None = None
+        self._forces: dict[int, float] = {}
 
     def on_setup(self):
         self._physics = self.game_object.get_component(Physics)
@@ -39,9 +45,27 @@ class ThrusterController(Component):
     def add_thruster(self, thruster: Thruster):
         self._thrusters.append(thruster)
 
+    def max_force(self, thruster_index: int) -> float:
+        return self._thrusters[thruster_index].max_force
+
+    @property
+    def thrusters(self) -> list[Thruster]:
+        return list(self._thrusters)
+
+    def current_force(self, thruster_index: int) -> float:
+        """Thrust (N) of the engine in the current tick."""
+        return self._forces.get(thruster_index, 0.0)
+
+    def on_physics_update(self, ctx, delta: float):
+        self._forces = {}
+
     def apply_force(self, force: float, thruster_index: int | None = None) -> None:
-        for thruster, direction in self._selected(thruster_index):
-            self._physics.add_force(direction * force, thruster.position)
+        """Sets engine thrust (N) for the next tick."""
+        indices = range(len(self._thrusters)) if thruster_index is None else [thruster_index]
+        for i, (thruster, direction) in zip(indices, self._selected(thruster_index)):
+            clamped = min(max(force, 0.0), thruster.max_force)
+            self._forces[i] = self._forces.get(i, 0.0) + clamped
+            self._physics.add_force(direction * clamped, thruster.position)
 
     def apply_impulse(self, impulse: float, thruster_index: int | None = None) -> None:
         for thruster, direction in self._selected(thruster_index):

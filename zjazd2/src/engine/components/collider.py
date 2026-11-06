@@ -45,7 +45,7 @@ class Collider(Component):
         return self._corners
 
     def world_corners(self, position: Vector2, rotation: float) -> list[Vector2]:
-        """Corners in world space for a body at the given position/rotation."""
+        """Collider corners in world space."""
         c, s = math.cos(rotation), math.sin(rotation)
         ox, oy = self._offset.x, self._offset.y
         cx = position.x + ox * c - oy * s

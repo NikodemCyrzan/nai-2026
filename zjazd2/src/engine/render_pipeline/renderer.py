@@ -55,7 +55,7 @@ class Renderer:
         stroke: Color | None = None,
         stroke_width: float = 0.0,
     ) -> None:
-        """Draws a polygon in world coordinates. stroke_width is in world units (0 = 1px hairline)."""
+        """Draws a polygon in world coordinates."""
         p = self._painter
         assert p is not None
 
@@ -69,6 +69,39 @@ class Renderer:
         p.setPen(pen)
         p.setBrush(brush)
         p.drawPolygon(QPolygonF([QPointF(v.x, v.y) for v in points]))
+
+    def draw_line(self, a: Vector2, b: Vector2, color: Color, width: float = 0.0) -> None:
+        """Draws a line in world coordinates."""
+        p = self._painter
+        assert p is not None
+
+        pen = QPen(_qcolor(color))
+        pen.setWidthF(width)
+        p.setPen(pen)
+        p.drawLine(QPointF(a.x, a.y), QPointF(b.x, b.y))
+
+    def draw_circle(
+        self,
+        center: Vector2,
+        radius: float,
+        fill: Color | None = None,
+        stroke: Color | None = None,
+        stroke_width: float = 0.0,
+    ) -> None:
+        """Draws a circle in world coordinates."""
+        p = self._painter
+        assert p is not None
+
+        if stroke is None:
+            pen = QPen(Qt.PenStyle.NoPen)
+        else:
+            pen = QPen(_qcolor(stroke))
+            pen.setWidthF(stroke_width)
+        brush = QBrush(_qcolor(fill)) if fill is not None else QBrush(Qt.BrushStyle.NoBrush)
+
+        p.setPen(pen)
+        p.setBrush(brush)
+        p.drawEllipse(QPointF(center.x, center.y), radius, radius)
 
     def draw_svg(self, svg: QSvgRenderer, target: QRectF, pos: Vector2, rotation: float) -> None:
         p = self._painter

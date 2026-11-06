@@ -5,7 +5,7 @@ from ..models.game_object import GameObject
 
 
 class ColliderDebugRenderer(Component):
-    """Outlines the colliders of the object's Physics component."""
+    """Draws outlines of the colliders."""
 
     def __init__(self, go: GameObject, color: Color = Color(200, 30, 30), stroke_width: float = 0.1):
         super().__init__(go)

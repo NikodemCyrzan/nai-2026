@@ -6,7 +6,10 @@ from engine.components.collider import Collider
 from engine.components.collider_debug_renderer import ColliderDebugRenderer
 from engine.components.loop_debugger import LoopDebugger, LogType
 from engine.components.physics import Physics
+from engine.components.sensor import Sensor
+from engine.components.sensor_debug_renderer import SensorDebugRenderer
 from engine.components.terrain_renderer import TerrainRenderer
+from engine.components.thruster_debug_renderer import ThrusterDebugRenderer
 from engine.components.thrusters import Thruster, ThrusterController
 from engine.components.vector_renderer import VectorRenderer
 from engine.models.game_object import GameObject
@@ -14,10 +17,16 @@ from engine.models.input import Input
 from engine.models.terrain import Terrain
 from engine.models.vector2 import Vector2
 from engine.render_pipeline.game_widget import GameWidget
+from gameplay.landing_ai import LandingAI
 from gameplay.launch_controller import LaunchController
 
 
-DEBUG_COLLIDERS = True
+DEBUG_COLLIDERS = False
+DEBUG_SENSORS = True
+DEBUG_THRUST = True
+
+ENGINE_MAX_FORCE = 25_000.0
+ENGINE_OFFSET_X = 1.5
 DEBUG_LOOP_LOG: set[LogType] = set()
 
 
@@ -42,7 +51,7 @@ def create_terrain(terrain: Terrain):
 
     return go
 
-def create_car(debug_colliders: bool = False):
+def create_car(debug_colliders: bool = False, debug_sensors: bool = False, debug_thrust: bool = False):
     comp = []
     go = GameObject(comp, Vector2(0.0, 100.0))
     comp.append(VectorRenderer(go, "assets/roadster.svg", width=4.7))
@@ -57,11 +66,25 @@ def create_car(debug_colliders: bool = False):
         Collider(go, 0.705, 0.705, 0.2, offset=r_wheel_offset),
     ]
 
-    comp.append(ThrusterController(go, [Thruster(l_wheel_offset), Thruster(r_wheel_offset)]))
+    engine_y = l_wheel_offset.y
+    comp.append(ThrusterController(go, [
+        Thruster(Vector2(-ENGINE_OFFSET_X, engine_y), max_force=ENGINE_MAX_FORCE),
+        Thruster(Vector2(ENGINE_OFFSET_X, engine_y), max_force=ENGINE_MAX_FORCE),
+    ]))
     comp.append(LaunchController(go))
+    comp.append(LandingAI(go))
     comp.append(Physics(go, colliders, 2350))
+
+    wheel_bottom = l_wheel_offset.y - 0.3525
+    comp.append(Sensor(go, Vector2(l_wheel_offset.x, wheel_bottom), name="rear", look="velocity"))
+    comp.append(Sensor(go, Vector2(r_wheel_offset.x, wheel_bottom), name="front", look="velocity"))
+
     if debug_colliders:
         comp.append(ColliderDebugRenderer(go))
+    if debug_sensors:
+        comp.append(SensorDebugRenderer(go))
+    if debug_thrust:
+        comp.append(ThrusterDebugRenderer(go))
 
     return go
 
@@ -72,7 +95,7 @@ class Game:
         render_ctx = RenderContext()
         physics_ctx = PhysicsContext(terrain, input)
 
-        car = create_car(debug_colliders=DEBUG_COLLIDERS)
+        car = create_car(debug_colliders=DEBUG_COLLIDERS, debug_sensors=DEBUG_SENSORS, debug_thrust=DEBUG_THRUST)
 
         game_objects = [
             create_camera(target=car),

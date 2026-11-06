@@ -1,5 +1,6 @@
 from __future__ import annotations
 import math
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .collider import Collider
@@ -13,6 +14,14 @@ if TYPE_CHECKING:
 
 
 Contact = tuple[float, float, float, float, float]
+
+
+@dataclass(frozen=True)
+class Touchdown:
+    """First contact with the terrain after a flight."""
+    impact_speed: float
+    tilt: float
+    position: Vector2
 
 
 class Physics(Component):
@@ -44,6 +53,9 @@ class Physics(Component):
         self._angular_velocity = 0.0
         self._angular_acceleration = 0.0
 
+        self._in_contact = False
+        self._last_touchdown: Touchdown | None = None
+
     @property
     def mass(self) -> float:
         return self._mass
@@ -58,7 +70,7 @@ class Physics(Component):
 
     @property
     def position(self) -> Vector2:
-        """Simulation position (not interpolated). Use this in physics-update logic."""
+        """Simulation position (not interpolated)."""
         return self._position.copy()
 
     @property
@@ -75,6 +87,15 @@ class Physics(Component):
         self._velocity = value.copy()
 
     @property
+    def in_contact(self) -> bool:
+        """Whether the body touched the terrain in the last tick."""
+        return self._in_contact
+
+    @property
+    def last_touchdown(self) -> Touchdown | None:
+        return self._last_touchdown
+
+    @property
     def speed(self) -> float:
         return self._velocity.length
 
@@ -87,7 +108,7 @@ class Physics(Component):
         self._angular_velocity = value
 
     def teleport(self, position: Vector2, rotation: float | None = None) -> None:
-        """Move instantly without interpolating from the old position."""
+        """Moves the body instantly, without interpolation."""
         self._position = position.copy()
         self._prev_position = position.copy()
         if rotation is not None:
@@ -99,31 +120,31 @@ class Physics(Component):
         go.rotation = self._rotation
 
     def add_force(self, force: Vector2, point: Vector2 | None = None) -> None:
-        """Continuous force (N) for the next tick. point: local offset from center of mass. Call every tick."""
+        """Applies a force (N) for the next tick, optionally at a local point."""
         self._acceleration = self._acceleration + force / self._mass
         if point is not None:
             self._angular_acceleration += self._torque(force, point) / self._inertia
 
     def add_acceleration(self, acceleration: Vector2) -> None:
-        """Continuous acceleration (units/s²) for the next tick, mass-independent. Call every tick."""
+        """Applies an acceleration for the next tick."""
         self._acceleration = self._acceleration + acceleration
 
     def add_torque(self, torque: float) -> None:
-        """Continuous torque (N·m) for the next tick, counter-clockwise positive. Call every tick."""
+        """Applies a torque (N·m) for the next tick."""
         self._angular_acceleration += torque / self._inertia
 
     def add_impulse(self, impulse: Vector2, point: Vector2 | None = None) -> None:
-        """Instant impulse (N·s). point: local offset from center of mass. Call once."""
+        """Applies an instant impulse (N·s), optionally at a local point."""
         self._velocity = self._velocity + impulse / self._mass
         if point is not None:
             self._angular_velocity += self._torque(impulse, point) / self._inertia
 
     def add_velocity(self, dv: Vector2) -> None:
-        """Instant velocity change, mass-independent. Call once."""
+        """Changes the velocity instantly."""
         self._velocity = self._velocity + dv
 
     def add_angular_velocity(self, dw: float) -> None:
-        """Instant angular velocity change (rad/s), inertia-independent. Call once."""
+        """Changes the angular velocity instantly."""
         self._angular_velocity += dw
 
     def on_physics_update(self, ctx: PhysicsContext, delta: float):
@@ -140,6 +161,9 @@ class Physics(Component):
         self._rotation += self._angular_velocity * delta
 
         contacts = self._find_contacts(ctx.terrain, delta)
+        if contacts and not self._in_contact:
+            self._last_touchdown = self._measure_touchdown(contacts, ctx.terrain)
+        self._in_contact = bool(contacts)
         if contacts:
             self._solve_contacts(contacts)
 
@@ -207,6 +231,17 @@ class Physics(Component):
 
         pos.y += deepest
         return contacts
+
+    def _measure_touchdown(self, contacts: list[Contact], terrain: Terrain) -> Touchdown:
+        impact = 0.0
+        for rx, ry, tx, ty, _ in contacts:
+            vx, vy = self._point_velocity(rx, ry)
+            impact = max(impact, -(vx * -ty + vy * tx))
+        xs = [p.x for col in self._colliders for p in col.world_corners(self._position, self._rotation)]
+        left, right = min(xs), max(xs)
+        slope_angle = math.atan2(terrain.height_at(right) - terrain.height_at(left), right - left)
+        tilt = math.remainder(self._rotation - slope_angle, math.tau)
+        return Touchdown(impact, tilt, self._position.copy())
 
     def _solve_contacts(self, contacts: list[Contact]) -> None:
         inv_m = 1.0 / self._mass

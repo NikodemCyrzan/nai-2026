@@ -6,7 +6,7 @@ from ..models.vector2 import Vector2
 
 
 class TerrainRenderer(Component):
-    """Draws the terrain as a filled polygon. Must come after the Camera in render order."""
+    """Draws the terrain."""
 
     MARGIN = 100.0
     SAMPLE_SPACING = 1.0
