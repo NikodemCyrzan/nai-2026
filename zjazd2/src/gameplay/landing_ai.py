@@ -1,83 +1,119 @@
 import math
 
+import simpful as sf
+
 from engine.component_executors.physics_context import PhysicsContext
 from engine.components.physics import Physics
 from engine.components.sensor import Sensor
 from engine.components.thrusters import ThrusterController
-from engine.mathematics.fuzzy import FuzzyVariable, MamdaniSystem, Rule, trapezoid, triangle
 from engine.models.component import Component
 
 
-def create_braking_system() -> MamdaniSystem:
+RANGES = {
+    "distance": (0.0, 100.0),
+    "speed": (-20.0, 50.0),
+    "thrust": (-0.2, 1.2),
+    "tilt": (-1.5, 1.5),
+    "spin": (-5.0, 5.0),
+    "shift": (-1.4, 1.4),
+}
+
+
+def _variable(fs: sf.FuzzySystem, name: str, sets: list) -> None:
+    fs.add_linguistic_variable(name, sf.LinguisticVariable(sets, concept=name, universe_of_discourse=list(RANGES[name])))
+
+
+def create_braking_system() -> sf.FuzzySystem:
     """Distance and approach speed of one side -> thrust of the engine on that side."""
-    distance = FuzzyVariable("distance", 0.0, 100.0, {
-        "very_close": trapezoid(0.0, 0.0, 1.0, 3.0),
-        "close": triangle(1.0, 5.0, 12.0),
-        "medium": triangle(6.0, 20.0, 45.0),
-        "far": trapezoid(30.0, 50.0, 100.0, 100.0),
-    })
-    speed = FuzzyVariable("speed", -20.0, 50.0, {
-        "rising": trapezoid(-20.0, -20.0, -0.5, 0.2),
-        "slow": triangle(0.0, 1.0, 2.5),
-        "medium": triangle(1.5, 4.0, 8.0),
-        "fast": triangle(5.0, 10.0, 18.0),
-        "very_fast": trapezoid(12.0, 20.0, 50.0, 50.0),
-    })
-    thrust = FuzzyVariable("thrust", -0.2, 1.2, {
-        "zero": triangle(-0.2, 0.0, 0.2),
-        "low": triangle(0.1, 0.3, 0.45),
-        "hover": triangle(0.36, 0.46, 0.56),
-        "strong": triangle(0.55, 0.75, 0.95),
-        "full": triangle(0.8, 1.0, 1.2),
-    })
+    fs = sf.FuzzySystem(show_banner=False, verbose=False)
+    _variable(fs, "distance", [
+        sf.TrapezoidFuzzySet(0.0, 0.0, 1.0, 3.0, term="very_close"),
+        sf.TriangleFuzzySet(1.0, 5.0, 12.0, term="close"),
+        sf.TriangleFuzzySet(6.0, 20.0, 45.0, term="medium"),
+        sf.TrapezoidFuzzySet(30.0, 50.0, 100.0, 100.0, term="far"),
+    ])
+    _variable(fs, "speed", [
+        sf.TrapezoidFuzzySet(-20.0, -20.0, -0.5, 0.2, term="rising"),
+        sf.TriangleFuzzySet(0.0, 1.0, 2.5, term="slow"),
+        sf.TriangleFuzzySet(1.5, 4.0, 8.0, term="medium"),
+        sf.TriangleFuzzySet(5.0, 10.0, 18.0, term="fast"),
+        sf.TrapezoidFuzzySet(12.0, 20.0, 50.0, 50.0, term="very_fast"),
+    ])
+    _variable(fs, "thrust", [
+        sf.TriangleFuzzySet(-0.2, 0.0, 0.2, term="zero"),
+        sf.TriangleFuzzySet(0.1, 0.3, 0.45, term="low"),
+        sf.TriangleFuzzySet(0.36, 0.46, 0.56, term="hover"),
+        sf.TriangleFuzzySet(0.55, 0.75, 0.95, term="strong"),
+        sf.TriangleFuzzySet(0.8, 1.0, 1.2, term="full"),
+    ])
+    fs.add_rules([
+        "IF (speed IS rising) THEN (thrust IS zero)",
 
-    table = {
-        "very_close": ("zero", "hover", "full",   "full",   "full"),
-        "close":      ("zero", "low",   "strong", "full",   "full"),
-        "medium":     ("zero", "low",   "hover",  "strong", "full"),
-        "far":        ("zero", "zero",  "low",    "hover",  "strong"),
-    }
-    speeds = ("rising", "slow", "medium", "fast", "very_fast")
-    rules = [
-        Rule({"distance": d, "speed": s}, out)
-        for d, row in table.items()
-        for s, out in zip(speeds, row)
-    ]
-    return MamdaniSystem([distance, speed], thrust, rules)
+        "IF (distance IS very_close) AND (speed IS slow) THEN (thrust IS hover)",
+        "IF (distance IS very_close) AND (speed IS medium) THEN (thrust IS full)",
+        "IF (distance IS very_close) AND (speed IS fast) THEN (thrust IS full)",
+        "IF (distance IS very_close) AND (speed IS very_fast) THEN (thrust IS full)",
+
+        "IF (distance IS close) AND (speed IS slow) THEN (thrust IS low)",
+        "IF (distance IS close) AND (speed IS medium) THEN (thrust IS strong)",
+        "IF (distance IS close) AND (speed IS fast) THEN (thrust IS full)",
+        "IF (distance IS close) AND (speed IS very_fast) THEN (thrust IS full)",
+
+        "IF (distance IS medium) AND (speed IS slow) THEN (thrust IS low)",
+        "IF (distance IS medium) AND (speed IS medium) THEN (thrust IS hover)",
+        "IF (distance IS medium) AND (speed IS fast) THEN (thrust IS strong)",
+        "IF (distance IS medium) AND (speed IS very_fast) THEN (thrust IS full)",
+
+        "IF (distance IS far) AND (speed IS slow) THEN (thrust IS zero)",
+        "IF (distance IS far) AND (speed IS medium) THEN (thrust IS low)",
+        "IF (distance IS far) AND (speed IS fast) THEN (thrust IS hover)",
+        "IF (distance IS far) AND (speed IS very_fast) THEN (thrust IS strong)",
+    ])
+    return fs
 
 
-def create_leveling_system() -> MamdaniSystem:
+def create_leveling_system() -> sf.FuzzySystem:
     """Tilt from the wanted angle and spin -> thrust shift between rear and front engine."""
-    tilt = FuzzyVariable("tilt", -1.5, 1.5, {
-        "nose_down": trapezoid(-1.5, -1.5, -0.3, 0.0),
-        "level": triangle(-0.15, 0.0, 0.15),
-        "nose_up": trapezoid(0.0, 0.3, 1.5, 1.5),
-    })
-    spin = FuzzyVariable("spin", -5.0, 5.0, {
-        "turning_down": trapezoid(-5.0, -5.0, -0.6, 0.0),
-        "still": triangle(-0.3, 0.0, 0.3),
-        "turning_up": trapezoid(0.0, 0.6, 5.0, 5.0),
-    })
-    shift = FuzzyVariable("shift", -1.4, 1.4, {
-        "to_rear": triangle(-1.4, -1.0, -0.4),
-        "to_rear_a_bit": triangle(-0.8, -0.4, 0.0),
-        "none": triangle(-0.2, 0.0, 0.2),
-        "to_front_a_bit": triangle(0.0, 0.4, 0.8),
-        "to_front": triangle(0.4, 1.0, 1.4),
-    })
+    fs = sf.FuzzySystem(show_banner=False, verbose=False)
+    _variable(fs, "tilt", [
+        sf.TrapezoidFuzzySet(-1.5, -1.5, -0.3, 0.0, term="nose_down"),
+        sf.TriangleFuzzySet(-0.15, 0.0, 0.15, term="level"),
+        sf.TrapezoidFuzzySet(0.0, 0.3, 1.5, 1.5, term="nose_up"),
+    ])
+    _variable(fs, "spin", [
+        sf.TrapezoidFuzzySet(-5.0, -5.0, -0.6, 0.0, term="turning_down"),
+        sf.TriangleFuzzySet(-0.3, 0.0, 0.3, term="still"),
+        sf.TrapezoidFuzzySet(0.0, 0.6, 5.0, 5.0, term="turning_up"),
+    ])
+    _variable(fs, "shift", [
+        sf.TriangleFuzzySet(-1.4, -1.0, -0.4, term="to_rear"),
+        sf.TriangleFuzzySet(-0.8, -0.4, 0.0, term="to_rear_a_bit"),
+        sf.TriangleFuzzySet(-0.2, 0.0, 0.2, term="none"),
+        sf.TriangleFuzzySet(0.0, 0.4, 0.8, term="to_front_a_bit"),
+        sf.TriangleFuzzySet(0.4, 1.0, 1.4, term="to_front"),
+    ])
+    fs.add_rules([
+        "IF (tilt IS nose_down) AND (spin IS turning_down) THEN (shift IS to_front)",
+        "IF (tilt IS nose_down) AND (spin IS still) THEN (shift IS to_front)",
+        "IF (tilt IS nose_down) AND (spin IS turning_up) THEN (shift IS none)",
 
-    table = {
-        "nose_down": ("to_front",       "to_front", "none"),
-        "level":     ("to_front_a_bit", "none",     "to_rear_a_bit"),
-        "nose_up":   ("none",           "to_rear",  "to_rear"),
-    }
-    spins = ("turning_down", "still", "turning_up")
-    rules = [
-        Rule({"tilt": t, "spin": s}, out)
-        for t, row in table.items()
-        for s, out in zip(spins, row)
-    ]
-    return MamdaniSystem([tilt, spin], shift, rules)
+        "IF (tilt IS level) AND (spin IS turning_down) THEN (shift IS to_front_a_bit)",
+        "IF (tilt IS level) AND (spin IS still) THEN (shift IS none)",
+        "IF (tilt IS level) AND (spin IS turning_up) THEN (shift IS to_rear_a_bit)",
+
+        "IF (tilt IS nose_up) AND (spin IS turning_down) THEN (shift IS none)",
+        "IF (tilt IS nose_up) AND (spin IS still) THEN (shift IS to_rear)",
+        "IF (tilt IS nose_up) AND (spin IS turning_up) THEN (shift IS to_rear)",
+    ])
+    return fs
+
+
+def infer(fs: sf.FuzzySystem, inputs: dict[str, float], output: str) -> float:
+    """Runs Mamdani inference for crisp inputs and returns the crisp output."""
+    for name, value in inputs.items():
+        low, high = RANGES[name]
+        fs.set_variable(name, min(max(value, low), high), verbose=False)
+    return float(fs.Mamdani_inference([output], subdivisions=100, ignore_warnings=True)[output])
 
 
 class LandingAI(Component):
@@ -117,13 +153,14 @@ class LandingAI(Component):
 
         target = self._wanted_angle()
         tilt = math.remainder(physics.rotation - target, math.tau)
-        shift = self._leveling.compute({"tilt": tilt, "spin": physics.angular_velocity})
+        shift = infer(self._leveling, {"tilt": tilt, "spin": physics.angular_velocity}, "shift")
 
         for engine, sensor in self._sensors.items():
             if sensor.distance is None:
                 thrust = 0.0
             else:
-                thrust = self._braking.compute({"distance": sensor.distance, "speed": self._approach_speed(sensor)})
+                inputs = {"distance": sensor.distance, "speed": self._approach_speed(sensor)}
+                thrust = infer(self._braking, inputs, "thrust")
 
             side = 1.0 if engine == self.FRONT else -1.0
             thrust += side * shift * self.LEVELING_SHARE
